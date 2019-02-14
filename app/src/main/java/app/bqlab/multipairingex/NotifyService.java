@@ -10,6 +10,8 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
+import android.widget.Toast;
 
 public class NotifyService extends Service {
 
@@ -19,13 +21,23 @@ public class NotifyService extends Service {
     NotificationChannel notificationChannel;
 
     @Override
+    public void onCreate() {
+        super.onCreate();
+        init();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        isConnected = true;
         String content = intent.getStringExtra("content");
         Intent i = new Intent(this, MainActivity.class);
         PendingIntent p = PendingIntent.getActivity(this, 0, i, 0);
@@ -35,17 +47,7 @@ public class NotifyService extends Service {
                 .setContentIntent(p)
                 .build();
         startForeground(1, notification);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (isConnected) {
-                    if (buzz) {
-                        buzz = false;
-                        makeNotification("수업이 종료되었습니다.");
-                    }
-                }
-            }
-        }).start();
+        makeNotification("수업이 종료되었습니다.");
         return START_NOT_STICKY;
     }
 

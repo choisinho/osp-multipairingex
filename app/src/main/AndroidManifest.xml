@@ -22,6 +22,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".ClassActivity"/>
+        <service android:name=".NotifyService"/>
     </application>
-
 </manifest>

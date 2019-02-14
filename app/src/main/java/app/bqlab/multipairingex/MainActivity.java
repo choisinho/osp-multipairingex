@@ -41,7 +41,6 @@ public class MainActivity extends AppCompatActivity {
         loadData();
         checkClassCount();
         checkFinishedClass();
-        startService(new Intent(this, NotifyService.class));
     }
 
     private void init() {

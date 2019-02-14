@@ -145,7 +145,7 @@ public class ClassActivity extends AppCompatActivity {
     }
 
     private void exitClass() {
-        NotifyService.buzz = true;
+        startService(new Intent(this, NotifyService.class));
         new AlertDialog.Builder(ClassActivity.this)
                 .setTitle("수업 종료")
                 .setMessage("수업이 종료되어 메인 화면으로 이동합니다.")
