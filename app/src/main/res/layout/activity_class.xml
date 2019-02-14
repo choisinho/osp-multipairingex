@@ -4,16 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".ClassActivity">
 
     <ScrollView
-        android:id="@+id/main_body"
+        android:id="@+id/class_body"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingBottom="60dp">
 
         <LinearLayout
-            android:id="@+id/main_body_list"
+            android:id="@+id/class_body_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
@@ -28,13 +28,13 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/main_bot_add"
+            android:id="@+id/class_bot_exit"
             style="@style/Base.Widget.AppCompat.Button.Borderless"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="7"
             android:background="@color/colorAccent"
-            android:text="수업 추가"
+            android:text="수업 종료"
             android:textColor="@color/colorWhite"
             android:textStyle="bold" />
     </LinearLayout>
