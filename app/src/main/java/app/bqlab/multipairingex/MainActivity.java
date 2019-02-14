@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -25,7 +26,7 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity {
 
     //variables
-    SharedPreferences mSettingPref, mClassroomPref, mClasseNamePref;
+    SharedPreferences mSettingPref, mClassroomPref;
     ArrayList<Classroom> classrooms;
     //layouts
     LinearLayout mainBodyList;
@@ -35,14 +36,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         init();
-        loadClassrooms();
+        loadData();
     }
 
     private void init() {
         //objects
         mSettingPref = getSharedPreferences("setting", MODE_PRIVATE);
         mClassroomPref = getSharedPreferences("classroom", MODE_PRIVATE);
-        mClasseNamePref = getSharedPreferences("classname", MODE_PRIVATE);
         classrooms = new ArrayList<>();
         //layouts
         mainBodyList = findViewById(R.id.main_body_list);
@@ -63,57 +63,60 @@ public class MainActivity extends AppCompatActivity {
                                 final String name = nameInput.getText().toString();
                                 final EditText numberInput = new EditText(MainActivity.this);
                                 numberInput.setInputType(InputType.TYPE_CLASS_NUMBER);
-                                if (Objects.equals(mClasseNamePref.getString(String.valueOf(name.hashCode()), ""), "")) {
-                                    mClasseNamePref.edit().putString(String.valueOf(name.hashCode()), name).apply();
-                                    new AlertDialog.Builder(MainActivity.this)
-                                            .setTitle("강의실 추가")
-                                            .setMessage("강의실의 인원을 설정하세요.")
-                                            .setView(numberInput)
-                                            .setCancelable(false)
-                                            .setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    SharedPreferences.Editor editor = mClassroomPref.edit();
-                                                    Gson gson = new Gson();
-                                                    String json = gson.toJson(classrooms);
-                                                    editor.putString("list", json);
-                                                    editor.apply();
-                                                    loadClassrooms();
-                                                }
-                                            }).show();
-                                }
+                                new AlertDialog.Builder(MainActivity.this)
+                                        .setTitle("강의실 추가")
+                                        .setMessage("강의실의 인원을 설정하세요.")
+                                        .setView(numberInput)
+                                        .setCancelable(false)
+                                        .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                int number = Integer.parseInt(numberInput.getText().toString());
+                                                classrooms.add(new Classroom(name, number));
+                                                saveData();
+                                            }
+                                        }).show();
                             }
-                        })
-                        .show();
+                        }).show();
 
             }
         });
     }
 
-    private void loadClassrooms() {
-        Map<String, ?> names = mClasseNamePref.getAll();
-        if (!names.isEmpty()) {
+    private void saveData() {
+        SharedPreferences.Editor editor = mClassroomPref.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(classrooms);
+        editor.putString("list", json);
+        editor.apply();
+        loadData();
+    }
+
+    private void loadData() {
+        Gson gson = new Gson();
+        String json = mClassroomPref.getString("list", null);
+        Type type = new TypeToken<ArrayList<Classroom>>() {}.getType();
+        classrooms = gson.fromJson(json, type);
+        if (classrooms == null) {
+            classrooms = new ArrayList<>();
+            TextView textView = new TextView(this);
+            textView.setGravity(Gravity.CENTER_HORIZONTAL);
+            textView.setText("수업이 없습니다. 버튼을 눌러 수업을 추가하세요.");
+            mainBodyList.addView(textView);
+        } else {
             mainBodyList.removeAllViews();
-            for (final Map.Entry<String, ?> entry : names.entrySet()) {
+            for (final Classroom classroom : classrooms) {
                 Button button = new Button(this);
-                final String name = entry.getKey();
+                final String name = classroom.name;
                 button.setText(name);
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Gson gson = new Gson();
-                        String json = mClassroomPref.getString(name, "");
-                        Type type = new TypeToken<ArrayList<Classroom>>() {}.getType();
-                        Classroom classroom = gson.fromJson(json, type);
+                        Toast.makeText(MainActivity.this, classroom.name, Toast.LENGTH_LONG).show();
                     }
                 });
                 mainBodyList.addView(button);
             }
-        } else {
-            TextView textView = new TextView(this);
-            textView.setText("수업이 없습니다. 버튼을 눌러 추가하세요.");
-            textView.setGravity(Gravity.CENTER_HORIZONTAL);
-            mainBodyList.addView(textView);
         }
     }
 
