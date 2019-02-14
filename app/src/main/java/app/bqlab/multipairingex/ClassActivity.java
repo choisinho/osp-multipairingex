@@ -1,10 +1,12 @@
 package app.bqlab.multipairingex;
 
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -30,12 +32,14 @@ import app.akexorcist.bluetotohspp.library.DeviceList;
 public class ClassActivity extends AppCompatActivity {
 
     //variables
+    int studentNumber;
     int classroomNumber;
     String classroomName;
     //objects
     Classroom mClassroom;
     BluetoothSPP mBluetooth;
     SharedPreferences mClassroomPref;
+    Student mStudent;
     //layouts
     LinearLayout classBodyList;
 
@@ -45,6 +49,16 @@ public class ClassActivity extends AppCompatActivity {
         setContentView(R.layout.activity_class);
         init();
         loadStudentList();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (resultCode == Activity.RESULT_OK) {
+            if (requestCode == BluetoothState.REQUEST_CONNECT_DEVICE) {
+                assert data != null;
+                mStudent.bluetooth.connect(data);
+            }
+        }
     }
 
     private void init() {
@@ -107,6 +121,7 @@ public class ClassActivity extends AppCompatActivity {
                 if (student.count == 255) {
                     exitClass();
                 }
+                loadStudentList();
             }
         });
         student.bluetooth.setBluetoothConnectionListener(new BluetoothSPP.BluetoothConnectionListener() {
@@ -138,8 +153,9 @@ public class ClassActivity extends AppCompatActivity {
             Toast.makeText(ClassActivity.this, "블루투스가 활성화되지 않았습니다.", Toast.LENGTH_LONG).show();
             ClassActivity.this.finishAffinity();
         } else {
-            mBluetooth.setupService();
-            mBluetooth.startService(BluetoothState.DEVICE_OTHER);
+            mStudent = student;
+            student.bluetooth.setupService();
+            student.bluetooth.startService(BluetoothState.DEVICE_OTHER);
             startActivity(new Intent(ClassActivity.this, DeviceList.class));
         }
     }
