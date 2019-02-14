@@ -5,20 +5,29 @@ import android.content.SharedPreferences;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
+    //variables
     SharedPreferences mSettingPref, mClassroomPref, mClasseNamePref;
+    ArrayList<Classroom> classrooms;
+    //layouts
     LinearLayout mainBodyList;
 
     @Override
@@ -34,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
         mSettingPref = getSharedPreferences("setting", MODE_PRIVATE);
         mClassroomPref = getSharedPreferences("classroom", MODE_PRIVATE);
         mClasseNamePref = getSharedPreferences("classname", MODE_PRIVATE);
+        classrooms = new ArrayList<>();
         //layouts
         mainBodyList = findViewById(R.id.main_body_list);
         //initializing or setting
@@ -42,7 +52,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 final Classroom classroom;
                 final EditText nameInput = new EditText(MainActivity.this);
-                final EditText numberInput = new EditText(MainActivity.this);
                 new AlertDialog.Builder(MainActivity.this)
                         .setTitle("강의실 추가")
                         .setMessage("강의실의 이름을 설정하세요.")
@@ -52,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 final String name = nameInput.getText().toString();
+                                final EditText numberInput = new EditText(MainActivity.this);
+                                numberInput.setInputType(InputType.TYPE_CLASS_NUMBER);
                                 if (Objects.equals(mClasseNamePref.getString(String.valueOf(name.hashCode()), ""), "")) {
                                     mClasseNamePref.edit().putString(String.valueOf(name.hashCode()), name).apply();
                                     new AlertDialog.Builder(MainActivity.this)
@@ -64,8 +75,8 @@ public class MainActivity extends AppCompatActivity {
                                                 public void onClick(DialogInterface dialog, int which) {
                                                     SharedPreferences.Editor editor = mClassroomPref.edit();
                                                     Gson gson = new Gson();
-                                                    String json = gson.toJson(Classroom.class);
-                                                    editor.putString(name, json);
+                                                    String json = gson.toJson(classrooms);
+                                                    editor.putString("list", json);
                                                     editor.apply();
                                                     loadClassrooms();
                                                 }
@@ -82,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
     private void loadClassrooms() {
         Map<String, ?> names = mClasseNamePref.getAll();
         if (!names.isEmpty()) {
-            findViewById(R.id.main_body_list_empty).setVisibility(View.GONE);
+            mainBodyList.removeAllViews();
             for (final Map.Entry<String, ?> entry : names.entrySet()) {
                 Button button = new Button(this);
                 final String name = entry.getKey();
@@ -92,11 +103,17 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         Gson gson = new Gson();
                         String json = mClassroomPref.getString(name, "");
-                        Classroom classroom = gson.fromJson(json, Classroom.class);
+                        Type type = new TypeToken<ArrayList<Classroom>>() {}.getType();
+                        Classroom classroom = gson.fromJson(json, type);
                     }
                 });
                 mainBodyList.addView(button);
             }
+        } else {
+            TextView textView = new TextView(this);
+            textView.setText("수업이 없습니다. 버튼을 눌러 추가하세요.");
+            textView.setGravity(Gravity.CENTER_HORIZONTAL);
+            mainBodyList.addView(textView);
         }
     }
 
