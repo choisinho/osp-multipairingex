@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
         init();
         loadData();
         checkClassCount();
+        checkFinishedClass();
         startService(new Intent(this, NotifyService.class));
     }
 
@@ -109,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         }.getType();
         classrooms = gson.fromJson(json, type);
         if (classrooms != null) {
-            if (classrooms.size()==0) {
+            if (classrooms.size() == 0) {
                 TextView textView = new TextView(this);
                 textView.setGravity(Gravity.CENTER_HORIZONTAL);
                 textView.setText("수업이 없습니다. 버튼을 눌러 수업을 추가하세요.");
@@ -144,9 +145,7 @@ public class MainActivity extends AppCompatActivity {
                                     .setNeutralButton("강의 삭제", new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
-                                            classrooms.remove(classroom);
-                                            mainBodyList.removeView(v);
-                                            saveData();
+                                            removeClass(classroom);
                                         }
                                     }).show();
                         }
@@ -163,13 +162,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void removeClass(Classroom classroom) {
+        for (int i = 0; i < mainBodyList.getChildCount(); i++) {
+            if (((Button) mainBodyList.getChildAt(i)).getText().equals(classroom.name))
+                mainBodyList.removeView(mainBodyList.getChildAt(i));
+        }
+        classrooms.remove(classroom);
+        saveData();
+    }
+
     private void checkClassCount() {
-        if ((mClassroomPref.getInt("count", 0)%3)==0) {
+        if ((mClassroomPref.getInt("count", 0) % 3) == 0) {
             try {
-                int average = mClassroomPref.getInt("average",0)/mClassroomPref.getInt("count", 0);
+                int average = mClassroomPref.getInt("average", 0) / mClassroomPref.getInt("count", 0);
                 new AlertDialog.Builder(this)
-                        .setTitle("강의 참여율 통계")
-                        .setMessage("현재까지의 참여도 평균은 "+ String.valueOf(average)+"입니다.")
+                        .setTitle("강의 참여도 통계")
+                        .setMessage("현재까지의 참여도 평균은 " + String.valueOf(average) + "입니다.")
                         .setPositiveButton("확인", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -179,6 +187,15 @@ public class MainActivity extends AppCompatActivity {
                         }).show();
             } catch (ArithmeticException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private void checkFinishedClass() {
+        if (getIntent().getStringExtra("finishedClass") != null) {
+            for (Classroom classroom : classrooms) {
+                if (getIntent().getStringExtra("finishedClass").equals(classroom.name))
+                    removeClass(classroom);
             }
         }
     }

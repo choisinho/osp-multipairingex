@@ -29,6 +29,9 @@ import app.akexorcist.bluetotohspp.library.DeviceList;
 
 public class ClassActivity extends AppCompatActivity {
 
+    //variables
+    int classroomNumber;
+    String classroomName;
     //objects
     Classroom mClassroom;
     BluetoothSPP mBluetooth;
@@ -46,8 +49,8 @@ public class ClassActivity extends AppCompatActivity {
 
     private void init() {
         //objects
-        String classroomName = getIntent().getStringExtra("classroomName");
-        int classroomNumber = getIntent().getIntExtra("classroomNumber", 0);
+        classroomName = getIntent().getStringExtra("classroomName");
+        classroomNumber = getIntent().getIntExtra("classroomNumber", 0);
         mBluetooth = new BluetoothSPP(this);
         mClassroom = new Classroom(classroomName, classroomNumber);
         mClassroomPref = getSharedPreferences("classroom", MODE_PRIVATE);
@@ -71,6 +74,7 @@ public class ClassActivity extends AppCompatActivity {
             textView.setBackground(getDrawable(R.color.colorWhiteDark));
             textView.setClickable(true);
             textView.setFocusable(true);
+            textView.setTextSize(18f);
             if (mClassroom.students[i].isConnected) {
                 textView.setText(state);
                 if (mClassroom.students[i].count < 2) {
@@ -95,6 +99,7 @@ public class ClassActivity extends AppCompatActivity {
     }
 
     private void connectDeviceViaBluetooth(final Student student) {
+        student.bluetooth = new BluetoothSPP(this);
         student.bluetooth.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
             @Override
             public void onDataReceived(byte[] data, String message) {
@@ -107,18 +112,21 @@ public class ClassActivity extends AppCompatActivity {
         student.bluetooth.setBluetoothConnectionListener(new BluetoothSPP.BluetoothConnectionListener() {
             @Override
             public void onDeviceConnected(String name, String address) {
+                Toast.makeText(ClassActivity.this, "장치와 연결되었습니다.", Toast.LENGTH_LONG).show();
                 student.isConnected = true;
                 loadStudentList();
             }
 
             @Override
             public void onDeviceDisconnected() {
+                Toast.makeText(ClassActivity.this, "장치와 연결할 수 없습니다.", Toast.LENGTH_LONG).show();
                 student.isConnected = false;
                 loadStudentList();
             }
 
             @Override
             public void onDeviceConnectionFailed() {
+                Toast.makeText(ClassActivity.this, "장치와 연결할 수 없습니다.", Toast.LENGTH_LONG).show();
                 student.isConnected = false;
                 loadStudentList();
             }
@@ -152,7 +160,9 @@ public class ClassActivity extends AppCompatActivity {
                         average = total / mClassroom.students.length;
                         mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
                         mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
-                        startActivity(new Intent(ClassActivity.this, MainActivity.class));
+                        Intent intent = new Intent(ClassActivity.this, MainActivity.class);
+                        intent.putExtra("finishedClass", classroomName);
+                        startActivity(intent);
                         finish();
                     }
                 }).show();
