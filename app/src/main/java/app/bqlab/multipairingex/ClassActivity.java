@@ -171,6 +171,7 @@ public class ClassActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         int average, total = 0;
                         for (Student s : mClassroom.students) {
+                            s.bluetooth.send("255", true);
                             total += s.count;
                         }
                         average = total / mClassroom.students.length;
