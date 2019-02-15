@@ -11,7 +11,7 @@ import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 
 class Student {
     //variables
-    int count;
+    int count, number;
     boolean isConnected;
     //objects
     BluetoothSPP bluetooth;

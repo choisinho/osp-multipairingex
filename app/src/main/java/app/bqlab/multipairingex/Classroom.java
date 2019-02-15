@@ -12,8 +12,8 @@ class Classroom implements Serializable {
     Classroom(String name, int number) {
         this.name = name;
         students = new Student[number];
-        for (Student student : students) {
-            student = new Student();
+        for (int i = 0; i < students.length; i++) {
+            students[i] = new Student();
         }
     }
 }
