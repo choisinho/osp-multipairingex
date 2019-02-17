@@ -74,13 +74,16 @@ public class MainActivity extends AppCompatActivity {
                                             .setPositiveButton("확인", new DialogInterface.OnClickListener() {
                                                 @Override
                                                 public void onClick(DialogInterface dialog, int which) {
-                                                    int number = Integer.parseInt(numberInput.getText().toString());
-                                                    if (number != 0) {
+                                                    if (!numberInput.getText().toString().isEmpty()) {
+                                                        int number = Integer.parseInt(numberInput.getText().toString());
+                                                        if (number == 0) {
+                                                            Toast.makeText(MainActivity.this, "잘못된 입력입니다.", Toast.LENGTH_LONG).show();
+                                                            dialog.dismiss();
+                                                        }
                                                         classrooms.add(new Classroom(name, number));
                                                         saveData();
-                                                    } else {
+                                                    } else
                                                         Toast.makeText(MainActivity.this, "잘못된 입력입니다.", Toast.LENGTH_LONG).show();
-                                                    }
                                                 }
                                             }).show();
                                 } else {

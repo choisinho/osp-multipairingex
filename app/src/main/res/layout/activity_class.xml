@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
-            android:orientation="vertical"/>
+            android:orientation="vertical" />
     </ScrollView>
 
     <LinearLayout
@@ -33,7 +33,7 @@
             android:layout_height="match_parent"
             android:layout_weight="3"
             android:background="@color/colorPrimary"
-            android:text="실습 종료"
+            android:text=" 실습 종료"
             android:textColor="@color/colorWhite"
             android:textStyle="bold" />
 

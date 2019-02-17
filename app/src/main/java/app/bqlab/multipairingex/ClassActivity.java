@@ -30,7 +30,7 @@ import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
 import app.akexorcist.bluetotohspp.library.DeviceList;
 
-public class ClassActivity extends AppCompatActivity{
+public class ClassActivity extends AppCompatActivity {
 
     //variables
     int classroomNumber, temp;
@@ -72,6 +72,14 @@ public class ClassActivity extends AppCompatActivity{
         //layouts
         classBodyList = findViewById(R.id.class_body_list);
         //setting
+        findViewById(R.id.class_bot_stop).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                for (Student student : mClassroom.students) {
+                    student.isFinished = true;
+                }
+            }
+        });
         findViewById(R.id.class_bot_exit).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -99,6 +107,12 @@ public class ClassActivity extends AppCompatActivity{
                 } else {
                     button.setBackground(getDrawable(R.color.colorOrange));
                 }
+                if (mClassroom.students[i].isFinished) {
+                    button.setClickable(false);
+                    button.setFocusable(false);
+                    button.setText("실습이 종료된 학생입니다.");
+                    button.setBackground(getDrawable(R.color.colorWhiteDark));
+                }
             } else {
                 button.setText("연결을 위해 여기를 클릭하세요.");
                 final int finalI = i;
@@ -120,11 +134,11 @@ public class ClassActivity extends AppCompatActivity{
             @Override
             public void onDataReceived(byte[] data, String message) {
                 mStudent.count = Integer.parseInt(message);
+                if (mStudent.count == 255) {
+                    mStudent.isFinished = true;
+                }
                 if (temp != mStudent.count) {
                     loadStudentList();
-                }
-                if (mStudent.count == 255) {
-                    exitClass();
                 }
                 temp = mStudent.count;
             }
