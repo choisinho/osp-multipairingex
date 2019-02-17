@@ -81,7 +81,6 @@ public class ClassActivity extends AppCompatActivity{
     }
 
     private void loadStudentList() {
-        Log.d("시발" ," qlff");
         classBodyList.removeAllViews();
         for (int i = 0; i < mClassroom.students.length; i++) {
             if (mClassroom.students[i] == null)
