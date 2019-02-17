@@ -58,6 +58,8 @@ public class ClassActivity extends AppCompatActivity {
                 assert data != null;
                 mStudent.bluetooth.connect(data);
             }
+        } else {
+            disableEnableControls(true, classBodyList);
         }
     }
 
