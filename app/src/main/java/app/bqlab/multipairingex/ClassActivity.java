@@ -6,7 +6,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -34,6 +36,7 @@ public class ClassActivity extends AppCompatActivity {
 
     //variables
     int classroomNumber, temp;
+    boolean isClickedBackbutton;
     String classroomName;
     //objects
     Classroom mClassroom;
@@ -55,12 +58,34 @@ public class ClassActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == BluetoothState.REQUEST_CONNECT_DEVICE) {
-                assert data != null;
-                mStudent.bluetooth.connect(data);
+                if (data != null) {
+                    mStudent.bluetooth.connect(data);
+                }
             }
         } else {
             disableEnableControls(true, classBodyList);
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!isClickedBackbutton) {
+            Toast.makeText(this, "한번 더 누르면 수업이 종료됩니다.", Toast.LENGTH_SHORT).show();
+            isClickedBackbutton = true;
+        } else {
+            super.onBackPressed();
+            ActivityCompat.finishAffinity(this);
+        }
+        new CountDownTimer(3000, 1000) {
+            @Override
+            public void onTick(long l) {
+
+            }
+
+            public void onFinish() {
+                exitClass();
+            }
+        }.start();
     }
 
     private void init() {
