@@ -4,29 +4,17 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.text.InputType;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
@@ -102,9 +90,7 @@ public class ClassActivity extends AppCompatActivity {
         findViewById(R.id.class_bot_stop).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                for (Student student : mClassroom.students) {
-                    student.isFinished = true;
-                }
+                stopClass();
             }
         });
         findViewById(R.id.class_bot_exit).setOnClickListener(new View.OnClickListener() {
@@ -146,7 +132,7 @@ public class ClassActivity extends AppCompatActivity {
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        connectDeviceViaBluetooth(finalI);
+                        connectToDevice(finalI);
                     }
                 });
             }
@@ -154,7 +140,7 @@ public class ClassActivity extends AppCompatActivity {
         }
     }
 
-    private void connectDeviceViaBluetooth(int number) {
+    private void connectToDevice(int number) {
         mStudent = new Student();
         mStudent.bluetooth = new BluetoothSPP(this);
         mStudent.bluetooth.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
@@ -209,6 +195,38 @@ public class ClassActivity extends AppCompatActivity {
             mStudent.bluetooth.startService(BluetoothState.DEVICE_OTHER);
             startActivityForResult(new Intent(ClassActivity.this, DeviceList.class), BluetoothState.REQUEST_CONNECT_DEVICE);
         }
+    }
+
+    private void stopClass() {
+        new AlertDialog.Builder(ClassActivity.this)
+                .setTitle("실습 종료")
+                .setMessage("실습을 종료하면 다음 실습을 진행할 수 있습니다.")
+                .setCancelable(false)
+                .setPositiveButton("다음 실습", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        int average, total = 0;
+                        try {
+                            for (Student student : mClassroom.students) {
+                                student.count = 0;
+                                student.isFinished = false;
+                                student.bluetooth.send("255", true);
+                                total += student.count;
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        average = total / mClassroom.students.length;
+                        mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
+                        mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
+                    }
+                })
+                .setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                }).show();
     }
 
     private void exitClass() {
