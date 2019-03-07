@@ -58,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
                         .setTitle("강의실 추가")
                         .setMessage("강의실의 이름을 설정하세요.")
                         .setView(nameInput)
-                        .setCancelable(false)
                         .setPositiveButton("다음", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -68,15 +67,14 @@ public class MainActivity extends AppCompatActivity {
                                     numberInput.setInputType(InputType.TYPE_CLASS_NUMBER);
                                     new AlertDialog.Builder(MainActivity.this)
                                             .setTitle("강의실 추가")
-                                            .setMessage("강의실의 인원을 설정하세요.")
+                                            .setMessage("강의실의 인원을 설정하세요. (7명 이내)")
                                             .setView(numberInput)
-                                            .setCancelable(false)
                                             .setPositiveButton("확인", new DialogInterface.OnClickListener() {
                                                 @Override
                                                 public void onClick(DialogInterface dialog, int which) {
                                                     if (!numberInput.getText().toString().isEmpty()) {
                                                         int number = Integer.parseInt(numberInput.getText().toString());
-                                                        if (number == 0) {
+                                                        if (number == 0 || number > 7) {
                                                             Toast.makeText(MainActivity.this, "잘못된 입력입니다.", Toast.LENGTH_LONG).show();
                                                             dialog.dismiss();
                                                         }
@@ -85,12 +83,26 @@ public class MainActivity extends AppCompatActivity {
                                                     } else
                                                         Toast.makeText(MainActivity.this, "잘못된 입력입니다.", Toast.LENGTH_LONG).show();
                                                 }
-                                            }).show();
+                                            })
+                                            .setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+
+                                                }
+                                            })
+                                            .show();
                                 } else {
                                     Toast.makeText(MainActivity.this, "잘못된 입력입니다.", Toast.LENGTH_LONG).show();
                                 }
                             }
-                        }).show();
+                        })
+                        .setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                            }
+                        })
+                        .show();
 
             }
         });

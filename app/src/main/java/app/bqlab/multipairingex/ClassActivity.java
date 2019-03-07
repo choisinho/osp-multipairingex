@@ -23,7 +23,7 @@ import app.akexorcist.bluetotohspp.library.DeviceList;
 public class ClassActivity extends AppCompatActivity {
 
     //variables
-    int classroomNumber, temp;
+    int classroomNumber, studentNumber;
     boolean isClickedBackbutton;
     String classroomName;
     //objects
@@ -51,7 +51,7 @@ public class ClassActivity extends AppCompatActivity {
                 }
             }
         } else {
-            disableEnableControls(true, classBodyList);
+            setEnableChildren(true, classBodyList);
         }
     }
 
@@ -111,7 +111,7 @@ public class ClassActivity extends AppCompatActivity {
             button.setBackground(getDrawable(R.color.colorWhiteDark));
             button.setTextSize(18f);
             button.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_START);
-            if (mClassroom.students[i].isConnected) {
+            if (mClassroom.students[i].connected) {
                 button.setText(state);
                 if (mClassroom.students[i].count < 2) {
                     button.setBackground(getDrawable(R.color.colorRed));
@@ -120,7 +120,7 @@ public class ClassActivity extends AppCompatActivity {
                 } else {
                     button.setBackground(getDrawable(R.color.colorOrange));
                 }
-                if (mClassroom.students[i].isFinished) {
+                if (mClassroom.students[i].finished) {
                     button.setClickable(false);
                     button.setFocusable(false);
                     button.setText("실습이 종료된 학생입니다.");
@@ -146,39 +146,44 @@ public class ClassActivity extends AppCompatActivity {
         mStudent.bluetooth.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
             @Override
             public void onDataReceived(byte[] data, String message) {
-                mStudent.count = Integer.parseInt(message);
-                if (mStudent.count == 255) {
-                    mStudent.isFinished = true;
+                int i = Integer.parseInt(message);
+                if (i <= 7) {
+                    studentNumber = i;
+                } else if (i >= 10 && studentNumber != 0) {
+                    if (i==255) {
+                        mClassroom.students[studentNumber].finished = true;
+                        loadStudentList();
+                    } else {
+                        mClassroom.students[studentNumber].count = i - 10;
+                        loadStudentList();
+                    }
                 }
-                if (temp != mStudent.count) {
-                    loadStudentList();
-                }
-                temp = mStudent.count;
             }
         });
         mStudent.bluetooth.setBluetoothConnectionListener(new BluetoothSPP.BluetoothConnectionListener() {
             @Override
             public void onDeviceConnected(String name, String address) {
                 Toast.makeText(ClassActivity.this, "장치와 연결되었습니다.", Toast.LENGTH_LONG).show();
-                mStudent.isConnected = true;
+                mStudent.connected = true;
+                mStudent.bluetooth.send(String.valueOf(mStudent.number), true);
                 mClassroom.students[mStudent.number] = mStudent;
-                disableEnableControls(true, classBodyList);
+                setEnableChildren(true, classBodyList);
                 loadStudentList();
             }
 
             @Override
             public void onDeviceDisconnected() {
                 Toast.makeText(ClassActivity.this, "장치와 연결할 수 없습니다.", Toast.LENGTH_LONG).show();
-                mStudent.isConnected = false;
-                disableEnableControls(true, classBodyList);
+                mStudent.connected = false;
+                setEnableChildren(true, classBodyList);
                 loadStudentList();
             }
 
             @Override
             public void onDeviceConnectionFailed() {
                 Toast.makeText(ClassActivity.this, "장치와 연결할 수 없습니다.", Toast.LENGTH_LONG).show();
-                mStudent.isConnected = false;
-                disableEnableControls(true, classBodyList);
+                mStudent.connected = false;
+                setEnableChildren(true, classBodyList);
                 loadStudentList();
             }
         });
@@ -189,7 +194,7 @@ public class ClassActivity extends AppCompatActivity {
             Toast.makeText(ClassActivity.this, "블루투스가 활성화되지 않았습니다.", Toast.LENGTH_LONG).show();
             ClassActivity.this.finishAffinity();
         } else {
-            disableEnableControls(false, classBodyList);
+            setEnableChildren(false, classBodyList);
             mStudent.number = number;
             mStudent.bluetooth.setupService();
             mStudent.bluetooth.startService(BluetoothState.DEVICE_OTHER);
@@ -209,8 +214,7 @@ public class ClassActivity extends AppCompatActivity {
                         try {
                             for (Student student : mClassroom.students) {
                                 student.count = 0;
-                                student.isFinished = false;
-                                student.bluetooth.send("255", true);
+                                student.finished = false;
                                 total += student.count;
                             }
                         } catch (Exception e) {
@@ -240,9 +244,10 @@ public class ClassActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         int average, total = 0;
                         try {
-                            for (Student s : mClassroom.students) {
-                                s.bluetooth.send("255", true);
-                                total += s.count;
+                            for (Student student : mClassroom.students) {
+                                student.bluetooth.send("255", true);
+                                student.bluetooth.disconnect(); //이것만으로 되는지 확인해봐야 함
+                                total += student.count;
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -258,12 +263,12 @@ public class ClassActivity extends AppCompatActivity {
                 }).show();
     }
 
-    private void disableEnableControls(boolean enable, ViewGroup vg) {
-        for (int i = 0; i < vg.getChildCount(); i++) {
-            View child = vg.getChildAt(i);
+    private void setEnableChildren(boolean enable, ViewGroup viewGroup) {
+        for (int i = 0; i < viewGroup.getChildCount(); i++) {
+            View child = viewGroup.getChildAt(i);
             child.setEnabled(enable);
             if (child instanceof ViewGroup) {
-                disableEnableControls(enable, (ViewGroup) child);
+                setEnableChildren(enable, (ViewGroup) child);
             }
         }
     }
