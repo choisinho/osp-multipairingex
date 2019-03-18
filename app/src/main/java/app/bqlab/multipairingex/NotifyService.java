@@ -15,8 +15,6 @@ import android.widget.Toast;
 
 public class NotifyService extends Service {
 
-    public static boolean buzz, isConnected;
-
     NotificationManager notificationManager;
     NotificationChannel notificationChannel;
 
