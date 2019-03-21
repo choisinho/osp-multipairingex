@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 final EditText nameInput = new EditText(MainActivity.this);
+                nameInput.setSingleLine();
                 new AlertDialog.Builder(MainActivity.this)
                         .setTitle("강의실 추가")
                         .setMessage("강의실의 이름을 설정하세요.")
@@ -65,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
                                 if (!name.isEmpty()) {
                                     final EditText numberInput = new EditText(MainActivity.this);
                                     numberInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+                                    numberInput.setSingleLine();
                                     new AlertDialog.Builder(MainActivity.this)
                                             .setTitle("강의실 추가")
                                             .setMessage("강의실의 인원을 설정하세요. (7명 이내)")
@@ -77,9 +79,10 @@ public class MainActivity extends AppCompatActivity {
                                                         if (number == 0 || number > 7) {
                                                             Toast.makeText(MainActivity.this, "잘못된 입력입니다.", Toast.LENGTH_LONG).show();
                                                             dialog.dismiss();
+                                                        } else {
+                                                            classrooms.add(new Classroom(name, number));
+                                                            saveData();
                                                         }
-                                                        classrooms.add(new Classroom(name, number));
-                                                        saveData();
                                                     } else
                                                         Toast.makeText(MainActivity.this, "잘못된 입력입니다.", Toast.LENGTH_LONG).show();
                                                 }
