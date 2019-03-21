@@ -112,12 +112,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void saveData() {
-        SharedPreferences.Editor editor = mClassroomPref.edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(classrooms);
-        editor.putString("list", json);
-        editor.apply();
-        loadData();
+        try {
+            SharedPreferences.Editor editor = mClassroomPref.edit();
+            Gson gson = new Gson();
+            String json = gson.toJson(classrooms);
+            editor.putString("list", json);
+            editor.apply();
+            loadData();
+        } catch (Exception e) {
+            Toast.makeText(this, "일시적인 오류입니다. 잠시후 다시 시도해주세요.", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void loadData() {
