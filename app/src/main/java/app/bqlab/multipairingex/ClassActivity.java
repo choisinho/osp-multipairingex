@@ -46,7 +46,12 @@ public class ClassActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        exitClass();
+        for (Student student : mClassroom.students) {
+            if (student.bluetooth != null) {
+                student.bluetooth.send("255", false);
+                student.bluetooth.disconnect();
+            }
+        }
     }
 
     @Override
@@ -154,6 +159,8 @@ public class ClassActivity extends AppCompatActivity {
             @Override
             public void onDataReceived(byte[] data, String message) {
                 int i = Integer.parseInt(message);
+                Log.d("Received", String.valueOf(i));
+
                 if (i <= 7) {
                     studentNumber = i;
                 } else if (i >= 10 && studentNumber >= 0) {
@@ -173,7 +180,6 @@ public class ClassActivity extends AppCompatActivity {
                 Toast.makeText(ClassActivity.this, "장치와 연결되었습니다.", Toast.LENGTH_LONG).show();
                 mStudent.connected = true;
                 mStudent.bluetooth.send(String.valueOf(mStudent.number), false);
-                Log.d("보낸데이터", String.valueOf(mStudent.number));
                 mClassroom.students[mStudent.number] = mStudent;
                 setEnableChildren(true, classBodyList);
                 loadStudentList();
@@ -219,18 +225,17 @@ public class ClassActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         int average, total = 0;
-                        try {
-                            for (Student student : mClassroom.students) {
-                                student.count = 0;
-                                student.finished = false;
+                        for (Student student : mClassroom.students) {
+                            if (student.bluetooth != null) {
+                                student.bluetooth.send("255", false);
+                                student.bluetooth.disconnect();
                                 total += student.count;
                             }
-                        } catch (Exception e) {
-                            e.printStackTrace();
                         }
                         average = total / mClassroom.students.length;
                         mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
                         mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
+                        loadStudentList();
                     }
                 })
                 .setNegativeButton("취소", new DialogInterface.OnClickListener() {
@@ -242,6 +247,7 @@ public class ClassActivity extends AppCompatActivity {
     }
 
     private void exitClass() {
+        startService(new Intent(ClassActivity.this, NotifyService.class));
         new AlertDialog.Builder(ClassActivity.this)
                 .setTitle("수업 종료")
                 .setMessage("수업이 종료되어 메인 화면으로 이동합니다.")
@@ -250,14 +256,12 @@ public class ClassActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         int average, total = 0;
-                        try {
-                            for (Student student : mClassroom.students) {
+                        for (Student student : mClassroom.students) {
+                            if (student.bluetooth != null) {
                                 student.bluetooth.send("255", true);
                                 student.bluetooth.disconnect();
                                 total += student.count;
                             }
-                        } catch (Exception e) {
-                            e.printStackTrace();
                         }
                         average = total / mClassroom.students.length;
                         mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
