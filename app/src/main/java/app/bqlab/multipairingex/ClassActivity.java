@@ -48,7 +48,7 @@ public class ClassActivity extends AppCompatActivity {
         super.onDestroy();
         for (Student student : mClassroom.students) {
             if (student.bluetooth != null) {
-                student.bluetooth.send("255", false);
+                student.bluetooth.send("255", true);
                 student.bluetooth.disconnect();
             }
         }
@@ -227,8 +227,9 @@ public class ClassActivity extends AppCompatActivity {
                         int average, total = 0;
                         for (Student student : mClassroom.students) {
                             if (student.bluetooth != null) {
-                                student.bluetooth.send("255", false);
-                                student.bluetooth.disconnect();
+                                student.bluetooth.send("254", true);
+                                student.count = 0;
+                                student.finished = false;
                                 total += student.count;
                             }
                         }
