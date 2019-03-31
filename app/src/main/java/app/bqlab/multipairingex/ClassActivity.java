@@ -10,6 +10,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -40,6 +41,12 @@ public class ClassActivity extends AppCompatActivity {
         setContentView(R.layout.activity_class);
         init();
         loadStudentList();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        exitClass();
     }
 
     @Override
@@ -127,8 +134,8 @@ public class ClassActivity extends AppCompatActivity {
                     button.setBackground(getDrawable(R.color.colorWhiteDark));
                 }
             } else {
-                button.setText("연결을 위해 여기를 클릭하세요.");
                 final int finalI = i;
+                button.setText("연결을 위해 여기를 클릭하세요.");
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -149,8 +156,8 @@ public class ClassActivity extends AppCompatActivity {
                 int i = Integer.parseInt(message);
                 if (i <= 7) {
                     studentNumber = i;
-                } else if (i >= 10 && studentNumber != 0) {
-                    if (i==255) {
+                } else if (i >= 10 && studentNumber >= 0) {
+                    if (i == 255) {
                         mClassroom.students[studentNumber].finished = true;
                         loadStudentList();
                     } else {
@@ -165,7 +172,8 @@ public class ClassActivity extends AppCompatActivity {
             public void onDeviceConnected(String name, String address) {
                 Toast.makeText(ClassActivity.this, "장치와 연결되었습니다.", Toast.LENGTH_LONG).show();
                 mStudent.connected = true;
-                mStudent.bluetooth.send(String.valueOf(mStudent.number), true);
+                mStudent.bluetooth.send(String.valueOf(mStudent.number), false);
+                Log.d("보낸데이터", String.valueOf(mStudent.number));
                 mClassroom.students[mStudent.number] = mStudent;
                 setEnableChildren(true, classBodyList);
                 loadStudentList();
@@ -234,7 +242,6 @@ public class ClassActivity extends AppCompatActivity {
     }
 
     private void exitClass() {
-        startService(new Intent(this, NotifyService.class));
         new AlertDialog.Builder(ClassActivity.this)
                 .setTitle("수업 종료")
                 .setMessage("수업이 종료되어 메인 화면으로 이동합니다.")
@@ -246,7 +253,7 @@ public class ClassActivity extends AppCompatActivity {
                         try {
                             for (Student student : mClassroom.students) {
                                 student.bluetooth.send("255", true);
-                                student.bluetooth.disconnect(); //이것만으로 되는지 확인해봐야 함
+                                student.bluetooth.disconnect();
                                 total += student.count;
                             }
                         } catch (Exception e) {

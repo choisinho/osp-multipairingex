@@ -12,6 +12,8 @@ class Student {
 
     Student() {
         count = 0;
+        number = 0;
         connected = false;
+        finished = false;
     }
 }
