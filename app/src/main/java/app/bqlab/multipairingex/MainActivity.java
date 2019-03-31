@@ -44,12 +44,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init() {
-        //objects
+        //initialize
         mClassroomPref = getSharedPreferences("classroom", MODE_PRIVATE);
         classrooms = new ArrayList<>();
-        //layouts
         mainBodyList = findViewById(R.id.main_body_list);
-        //initializing or setting
+        //setup
         findViewById(R.id.main_bot_add).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
