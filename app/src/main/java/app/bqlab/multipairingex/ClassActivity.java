@@ -46,12 +46,7 @@ public class ClassActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        for (Student student : mClassroom.students) {
-            if (student.bluetooth != null) {
-                student.bluetooth.send("255", true);
-                student.bluetooth.disconnect();
-            }
-        }
+        exitClass();
     }
 
     @Override
@@ -93,7 +88,6 @@ public class ClassActivity extends AppCompatActivity {
         classroomName = getIntent().getStringExtra("classroomName");
         classroomNumber = getIntent().getIntExtra("classroomNumber", 0);
         mBluetooth = new BluetoothSPP(this);
-        mStudent = new Student();
         mClassroom = new Classroom(classroomName, classroomNumber);
         mClassroomPref = getSharedPreferences("classroom", MODE_PRIVATE);
         //layouts
@@ -159,8 +153,6 @@ public class ClassActivity extends AppCompatActivity {
             @Override
             public void onDataReceived(byte[] data, String message) {
                 int i = Integer.parseInt(message);
-                Log.d("Received", String.valueOf(i));
-
                 if (i <= 7) {
                     studentNumber = i;
                 } else if (i >= 10 && studentNumber >= 0) {
