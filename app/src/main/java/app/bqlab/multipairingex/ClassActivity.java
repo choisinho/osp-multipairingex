@@ -23,6 +23,8 @@ import app.akexorcist.bluetotohspp.library.DeviceList;
 
 public class ClassActivity extends AppCompatActivity {
 
+    //constants
+    final String TAG = "ClassActivity";
     //variables
     int classroomNumber, studentNumber;
     boolean isClickedBackbutton;
@@ -155,14 +157,13 @@ public class ClassActivity extends AppCompatActivity {
                 int i = Integer.parseInt(message);
                 if (i <= 7) {
                     studentNumber = i;
+                    Log.d(TAG, "onDataReceived: studentNumber: "+message);
                 } else if (i >= 10 && studentNumber >= 0) {
-                    if (i == 255) {
+                    Log.d(TAG, "onDataReceived: data: "+message);
+                    if (i == 255)
                         mClassroom.students[studentNumber].finished = true;
-                        loadStudentList();
-                    } else {
+                    else
                         mClassroom.students[studentNumber].count = i - 10;
-                        loadStudentList();
-                    }
                 }
             }
         });
@@ -179,7 +180,6 @@ public class ClassActivity extends AppCompatActivity {
 
             @Override
             public void onDeviceDisconnected() {
-                Toast.makeText(ClassActivity.this, "장치와 연결할 수 없습니다.", Toast.LENGTH_LONG).show();
                 mStudent.connected = false;
                 setEnableChildren(true, classBodyList);
                 loadStudentList();
