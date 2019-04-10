@@ -157,13 +157,19 @@ public class ClassActivity extends AppCompatActivity {
                 int i = Integer.parseInt(message);
                 if (i <= 7) {
                     studentNumber = i;
-                    Log.d(TAG, "onDataReceived: studentNumber: "+message);
+                    Log.d(TAG, "onDataReceived: studentNumber: " + message);
                 } else if (i >= 10 && studentNumber >= 0) {
-                    Log.d(TAG, "onDataReceived: data: "+message);
-                    if (i == 255)
+                    Log.d(TAG, "onDataReceived: data: " + message);
+                    if (i == 255) {
                         mClassroom.students[studentNumber].finished = true;
-                    else
-                        mClassroom.students[studentNumber].count = i - 10;
+                    } else {
+                        int count = i - 10;
+                        if (mClassroom.students[studentNumber].count != count) {
+                            Log.d(TAG, "onDataReceived: count: " + String.valueOf(count));
+                            mClassroom.students[studentNumber].count = count;
+                            loadStudentList();
+                        }
+                    }
                 }
             }
         });
