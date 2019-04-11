@@ -1,5 +1,6 @@
 package app.bqlab.multipairingex;
 
+import android.app.Service;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -27,6 +28,8 @@ import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
+    //constants
+    final String TAG = "MainActivity: ";
     //variables
     SharedPreferences mClassroomPref;
     ArrayList<Classroom> classrooms;
@@ -154,6 +157,7 @@ public class MainActivity extends AppCompatActivity {
                                             intent.putExtra("classroomName", classroom.name);
                                             intent.putExtra("classroomNumber", classroom.students.length);
                                             startActivity(intent);
+                                            finish();
                                         }
                                     })
                                     .setNegativeButton("취소", new DialogInterface.OnClickListener() {

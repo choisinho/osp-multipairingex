@@ -25,5 +25,7 @@
         </activity>
         <activity android:name=".ClassActivity"/>
         <service android:name=".NotifyService"/>
+        <service android:name=".ExitService"
+            android:stopWithTask="false"/>
     </application>
 </manifest>

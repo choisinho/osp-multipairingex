@@ -28,7 +28,7 @@ public class ClassActivity extends AppCompatActivity {
     final String TAG = "ClassActivity";
     //variables
     int classroomNumber, studentNumber;
-    boolean isClickedBackbutton, loading;
+    boolean isClickedBackbutton, allowedExit;
     String classroomName;
     //objects
     Classroom mClassroom;
@@ -43,13 +43,8 @@ public class ClassActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_class);
         init();
+        checkExitService();
         loadStudentList();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        exitClass();
     }
 
     @Override
@@ -72,6 +67,7 @@ public class ClassActivity extends AppCompatActivity {
             isClickedBackbutton = true;
         } else {
             super.onBackPressed();
+            stopService(new Intent(this, ExitService.class));
             ActivityCompat.finishAffinity(this);
         }
         new CountDownTimer(3000, 1000) {
@@ -79,7 +75,6 @@ public class ClassActivity extends AppCompatActivity {
             public void onTick(long l) {
 
             }
-
             public void onFinish() {
                 exitClass();
             }
@@ -111,6 +106,7 @@ public class ClassActivity extends AppCompatActivity {
     }
 
     private void loadStudentList() {
+        Log.d(TAG, "loadStudentList: ");
         classBodyList.removeAllViews();
         for (int i = 0; i < mClassroom.students.length; i++) {
             if (mClassroom.students[i] == null)
@@ -167,22 +163,7 @@ public class ClassActivity extends AppCompatActivity {
                         int count = i - 10;
                         if (mClassroom.students[studentNumber].count != count) {
                             mClassroom.students[studentNumber].count = count;
-                            new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            try {
-                                                Thread.sleep(100);
-                                                loadStudentList();
-                                            } catch (InterruptedException e) {
-                                                e.printStackTrace();
-                                            }
-                                        }
-                                    });
-                                }
-                            }).start();
+                            loadStudentList();
                         }
                     }
                 }
@@ -201,15 +182,27 @@ public class ClassActivity extends AppCompatActivity {
 
             @Override
             public void onDeviceDisconnected() {
-                Toast.makeText(ClassActivity.this, "장치를 더이상 사용하지 않습니다.", Toast.LENGTH_LONG).show();
-                mStudent.connected = false;
-                setEnableChildren(true, classBodyList);
-                loadStudentList();
+                if (allowedExit) {
+                    mStudent.connected = false;
+                    setEnableChildren(true, classBodyList);
+                    loadStudentList();
+                } else {
+                    new AlertDialog.Builder(ClassActivity.this)
+                            .setTitle("장치에서 문제가 발생했습니다!")
+                            .setMessage("수업이 진행되는 동안 장치와의 연결이 강제로 끊어진 경우 수업을 더이상 진행할 수 없습니다.")
+                            .setCancelable(false)
+                            .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    exitClass();
+                                }
+                            }).show();
+                }
             }
 
             @Override
             public void onDeviceConnectionFailed() {
-                Toast.makeText(ClassActivity.this, "장치와 연결할 수 없습니다.", Toast.LENGTH_LONG).show();
+                Toast.makeText(ClassActivity.this, "장치와 연결할 수 없습니다. 장치를 연결할 수 없는 상태이거나 이미 연결되어 있지 않은지 확인 후 다시 시도하세요.", Toast.LENGTH_LONG).show();
                 mStudent.connected = false;
                 setEnableChildren(true, classBodyList);
                 loadStudentList();
@@ -217,9 +210,11 @@ public class ClassActivity extends AppCompatActivity {
         });
         if (!mBluetooth.isBluetoothAvailable()) {
             Toast.makeText(ClassActivity.this, "지원하지 않는 기기입니다.", Toast.LENGTH_LONG).show();
+            stopService(new Intent(this, ExitService.class));
             ClassActivity.this.finishAffinity();
         } else if (!mBluetooth.isBluetoothEnabled()) {
             Toast.makeText(ClassActivity.this, "블루투스가 활성화되지 않았습니다.", Toast.LENGTH_LONG).show();
+            stopService(new Intent(this, ExitService.class));
             ClassActivity.this.finishAffinity();
         } else {
             setEnableChildren(false, classBodyList);
@@ -275,9 +270,12 @@ public class ClassActivity extends AppCompatActivity {
                             for (Student student : mClassroom.students) {
                                 try {
                                     if (student.bluetooth != null) {
+                                        allowedExit = true;
+                                        student.connected = false;
                                         student.bluetooth.send("B", false);
                                         Thread.sleep(1000);
                                         student.bluetooth.disconnect();
+                                        loadStudentList();
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -286,6 +284,7 @@ public class ClassActivity extends AppCompatActivity {
                             average = total / mClassroom.students.length;
                             mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
                             mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
+                            stopService(new Intent(ClassActivity.this, ExitService.class));
                             Intent intent = new Intent(ClassActivity.this, MainActivity.class);
                             intent.putExtra("finishedClass", classroomName);
                             startActivity(intent);
@@ -295,49 +294,60 @@ public class ClassActivity extends AppCompatActivity {
                     .setPositiveButton("다음", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            for (Student student : mClassroom.students) {
-                                try {
-                                    if (student.bluetooth != null) {
-                                        student.bluetooth.send("B", false);
-                                        Thread.sleep(1000);
-                                        student.bluetooth.disconnect();
-                                    }
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
                             final EditText input = new EditText(ClassActivity.this);
                             new AlertDialog.Builder(ClassActivity.this)
                                     .setTitle("수업 종료")
                                     .setMessage("전송받을 메일 주소를 입력하세요.")
                                     .setView(input)
+                                    .setCancelable(false)
                                     .setPositiveButton("메일 앱으로 전송", new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
                                             //variables
                                             int average, total = 0;
-                                            String address, content = null;
-                                            //email setting
-                                            address = input.getText().toString();
+                                            //mail processing
+                                            new Thread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    String address, content = "";
+                                                    //email setting
+                                                    address = input.getText().toString();
+                                                    for (int i=0; i<mClassroom.students.length;i++) {
+                                                        StringBuilder builder = new StringBuilder();
+                                                        builder.append(content);
+                                                        builder.append(String.valueOf(i+1));
+                                                        builder.append("번 학생 참여도: ");
+                                                        builder.append(String.valueOf(mClassroom.students[i].count));
+                                                        builder.append("\n");
+                                                        content = builder.toString();
+                                                    }
+                                                    Intent emailIntent = new Intent(Intent.ACTION_SEND);
+                                                    emailIntent.putExtra(Intent.EXTRA_EMAIL, address);
+                                                    emailIntent.putExtra(Intent.EXTRA_SUBJECT, classroomName + " 수업참여도");
+                                                    emailIntent.putExtra(Intent.EXTRA_TEXT, content);
+                                                    emailIntent.setType("message/rfc822");
+                                                    startActivity(Intent.createChooser(emailIntent, "이메일을 보낼 앱을 선택하세요."));
+                                                }
+                                            }).start();
                                             for (Student student : mClassroom.students) {
-                                                StringBuilder builder = new StringBuilder();
-                                                builder.append(content);
-                                                builder.append(String.valueOf(student.number));
-                                                builder.append("번 학생 참여도: ");
-                                                builder.append(String.valueOf(student.count));
-                                                builder.append("\n");
-                                                content = builder.toString();
+                                                try {
+                                                    if (student.bluetooth != null) {
+                                                        allowedExit = true;
+                                                        student.connected = false;
+                                                        student.bluetooth.send("B", false);
+                                                        Thread.sleep(1000);
+                                                        student.bluetooth.disconnect();
+                                                        loadStudentList();
+                                                    }
+                                                } catch (Exception e) {
+                                                    e.printStackTrace();
+                                                }
                                             }
-                                            Intent emailIntent = new Intent(Intent.ACTION_SEND);
-                                            emailIntent.putExtra(Intent.EXTRA_EMAIL, address);
-                                            emailIntent.putExtra(Intent.EXTRA_SUBJECT, classroomName + " 수업참여도");
-                                            emailIntent.putExtra(Intent.EXTRA_TEXT, content);
-                                            emailIntent.setType("message/rfc822");
-                                            startActivity(Intent.createChooser(emailIntent, "이메일을 보낼 앱을 선택하세요."));
                                             //exit this class
                                             average = total / mClassroom.students.length;
                                             mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
                                             mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
+                                            stopService(new Intent(ClassActivity.this, ExitService.class));
                                             Intent intent = new Intent(ClassActivity.this, MainActivity.class);
                                             intent.putExtra("finishedClass", classroomName);
                                             startActivity(intent);
@@ -349,6 +359,12 @@ public class ClassActivity extends AppCompatActivity {
                     .show();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void checkExitService() {
+        if (!ServiceCheck.isRunning(this, ExitService.class.getName())) {
+            startService(new Intent(this, ExitService.class));
         }
     }
 
