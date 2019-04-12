@@ -18,6 +18,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import java.util.IllegalFormatCodePointException;
+
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
 import app.akexorcist.bluetotohspp.library.DeviceList;
@@ -26,6 +28,7 @@ public class ClassActivity extends AppCompatActivity {
 
     //constants
     final String TAG = "ClassActivity";
+    final int CHOOSE_MAIL_APP = 0;
     //variables
     int classroomNumber, studentNumber;
     boolean isClickedBackbutton, allowedExit;
@@ -56,7 +59,33 @@ public class ClassActivity extends AppCompatActivity {
                 }
             }
         } else {
-            setEnableChildren(true, classBodyList);
+            if (requestCode == BluetoothState.REQUEST_CONNECT_DEVICE) {
+                setEnableChildren(true, classBodyList);
+            } else if (requestCode == CHOOSE_MAIL_APP) {
+                int average, total = 0;
+                for (Student student : mClassroom.students) {
+                    try {
+                        if (student.bluetooth != null) {
+                            allowedExit = true;
+                            student.connected = false;
+                            student.bluetooth.send("B", false);
+                            Thread.sleep(1000);
+                            student.bluetooth.disconnect();
+                            loadStudentList();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                average = total / mClassroom.students.length;
+                mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
+                mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
+                stopService(new Intent(ClassActivity.this, ExitService.class));
+                Intent intent = new Intent(ClassActivity.this, MainActivity.class);
+                intent.putExtra("finishedClass", classroomName);
+                startActivity(intent);
+                finish();
+            }
         }
     }
 
@@ -75,6 +104,7 @@ public class ClassActivity extends AppCompatActivity {
             public void onTick(long l) {
 
             }
+
             public void onFinish() {
                 exitClass();
             }
@@ -312,10 +342,10 @@ public class ClassActivity extends AppCompatActivity {
                                                     String address, content = "";
                                                     //email setting
                                                     address = input.getText().toString();
-                                                    for (int i=0; i<mClassroom.students.length;i++) {
+                                                    for (int i = 0; i < mClassroom.students.length; i++) {
                                                         StringBuilder builder = new StringBuilder();
                                                         builder.append(content);
-                                                        builder.append(String.valueOf(i+1));
+                                                        builder.append(String.valueOf(i + 1));
                                                         builder.append("번 학생 참여도: ");
                                                         builder.append(String.valueOf(mClassroom.students[i].count));
                                                         builder.append("\n");
@@ -326,32 +356,9 @@ public class ClassActivity extends AppCompatActivity {
                                                     emailIntent.putExtra(Intent.EXTRA_SUBJECT, classroomName + " 수업참여도");
                                                     emailIntent.putExtra(Intent.EXTRA_TEXT, content);
                                                     emailIntent.setType("message/rfc822");
-                                                    startActivity(Intent.createChooser(emailIntent, "이메일을 보낼 앱을 선택하세요."));
+                                                    startActivityForResult(Intent.createChooser(emailIntent, "이메일을 보낼 앱을 선택하세요."), CHOOSE_MAIL_APP);
                                                 }
                                             }).start();
-                                            for (Student student : mClassroom.students) {
-                                                try {
-                                                    if (student.bluetooth != null) {
-                                                        allowedExit = true;
-                                                        student.connected = false;
-                                                        student.bluetooth.send("B", false);
-                                                        Thread.sleep(1000);
-                                                        student.bluetooth.disconnect();
-                                                        loadStudentList();
-                                                    }
-                                                } catch (Exception e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
-                                            //exit this class
-                                            average = total / mClassroom.students.length;
-                                            mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
-                                            mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
-                                            stopService(new Intent(ClassActivity.this, ExitService.class));
-                                            Intent intent = new Intent(ClassActivity.this, MainActivity.class);
-                                            intent.putExtra("finishedClass", classroomName);
-                                            startActivity(intent);
-                                            finish();
                                         }
                                     }).show();
                         }
