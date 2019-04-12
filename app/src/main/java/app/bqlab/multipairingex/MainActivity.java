@@ -198,6 +198,7 @@ public class MainActivity extends AppCompatActivity {
     private void checkClassCount() {
         if ((mClassroomPref.getInt("count", 0) % 3) == 0) {
             try {
+                Log.d(TAG, "checkClassCount: average: " + String.valueOf(mClassroomPref.getInt("average", 0)));
                 int average = mClassroomPref.getInt("average", 0) / mClassroomPref.getInt("count", 0);
                 new AlertDialog.Builder(this)
                         .setTitle("강의 참여도 통계")

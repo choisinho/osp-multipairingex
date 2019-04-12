@@ -66,6 +66,7 @@ public class ClassActivity extends AppCompatActivity {
                 for (Student student : mClassroom.students) {
                     try {
                         if (student.bluetooth != null) {
+                            total += student.count;
                             allowedExit = true;
                             student.connected = false;
                             student.bluetooth.send("B", false);
@@ -189,6 +190,7 @@ public class ClassActivity extends AppCompatActivity {
                     Log.d(TAG, "onDataReceived: data: " + message);
                     if (i == 255) {
                         mClassroom.students[studentNumber].finished = true;
+                        loadStudentList();
                     } else {
                         int count = i - 10;
                         if (mClassroom.students[studentNumber].count != count) {
@@ -266,6 +268,7 @@ public class ClassActivity extends AppCompatActivity {
                         int average, total = 0;
                         for (Student student : mClassroom.students) {
                             if (student.bluetooth != null) {
+                                total += student.count;
                                 student.bluetooth.send("A", false);
                                 student.count = 0;
                                 student.finished = false;
@@ -300,6 +303,7 @@ public class ClassActivity extends AppCompatActivity {
                             for (Student student : mClassroom.students) {
                                 try {
                                     if (student.bluetooth != null) {
+                                        total += student.count;
                                         allowedExit = true;
                                         student.connected = false;
                                         student.bluetooth.send("B", false);
