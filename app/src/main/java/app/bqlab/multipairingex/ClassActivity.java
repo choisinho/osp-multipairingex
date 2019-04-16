@@ -18,6 +18,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import java.time.chrono.ThaiBuddhistEra;
 import java.util.IllegalFormatCodePointException;
 
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
@@ -30,9 +31,10 @@ public class ClassActivity extends AppCompatActivity {
     final String TAG = "ClassActivity";
     final int CHOOSE_MAIL_APP = 0;
     //variables
+    int classNumber = 1;
     int classroomNumber, studentNumber;
     boolean isClickedBackbutton, allowedExit;
-    String classroomName;
+    String classroomName, emailContent = "";
     //objects
     Classroom mClassroom;
     BluetoothSPP mBluetooth;
@@ -185,14 +187,14 @@ public class ClassActivity extends AppCompatActivity {
                 int i = Integer.parseInt(message);
                 if (i <= 7) {
                     studentNumber = i;
-                    Log.d(TAG, "onDataReceived: studentNumber: " + message);
                 } else if (i >= 10 && studentNumber >= 0) {
-                    Log.d(TAG, "onDataReceived: data: " + message);
                     if (i == 255) {
+                        Log.d(TAG, "onDataReceived: studentNumber: " + message);
                         mClassroom.students[studentNumber].finished = true;
                         loadStudentList();
                     } else {
                         int count = i - 10;
+                        Log.d(TAG, "onDataReceived: data: " + message);
                         if (mClassroom.students[studentNumber].count != count) {
                             mClassroom.students[studentNumber].count = count;
                             loadStudentList();
@@ -266,6 +268,20 @@ public class ClassActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         int average, total = 0;
+                        StringBuilder builder = new StringBuilder();
+                        builder.append(emailContent);
+                        builder.append("\n")
+                                .append(classNumber)
+                                .append("차 실습\n");
+                        for (int i = 0; i < mClassroom.students.length; i++) {
+                            builder.append(String.valueOf(i + 1))
+                                    .append("번 학생 참여도: ")
+                                    .append(String.valueOf(mClassroom.students[i].count))
+                                    .append("\n");
+                        }
+                        builder.append("\n");
+                        emailContent = builder.toString();
+                        classNumber += 1;
                         for (Student student : mClassroom.students) {
                             if (student.bluetooth != null) {
                                 total += student.count;
@@ -337,28 +353,27 @@ public class ClassActivity extends AppCompatActivity {
                                     .setPositiveButton("메일 앱으로 전송", new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
-                                            //variables
-                                            int average, total = 0;
-                                            //mail processing
                                             new Thread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    String address, content = "";
-                                                    //email setting
-                                                    address = input.getText().toString();
+                                                    String email[] = new String[1];
+                                                    email[0] = input.getText().toString();
+                                                    StringBuilder builder = new StringBuilder();
+                                                    builder.append(emailContent);
+                                                    builder.append("\n")
+                                                            .append(classNumber)
+                                                            .append("차 실습\n");
                                                     for (int i = 0; i < mClassroom.students.length; i++) {
-                                                        StringBuilder builder = new StringBuilder();
-                                                        builder.append(content);
-                                                        builder.append(String.valueOf(i + 1));
-                                                        builder.append("번 학생 참여도: ");
-                                                        builder.append(String.valueOf(mClassroom.students[i].count));
-                                                        builder.append("\n");
-                                                        content = builder.toString();
+                                                        builder.append(String.valueOf(i + 1))
+                                                                .append("번 학생 참여도: ")
+                                                                .append(String.valueOf(mClassroom.students[i].count))
+                                                                .append("\n");
                                                     }
+                                                    emailContent = builder.toString();
                                                     Intent emailIntent = new Intent(Intent.ACTION_SEND);
-                                                    emailIntent.putExtra(Intent.EXTRA_EMAIL, address);
+                                                    emailIntent.putExtra(Intent.EXTRA_EMAIL, email);
                                                     emailIntent.putExtra(Intent.EXTRA_SUBJECT, classroomName + " 수업참여도");
-                                                    emailIntent.putExtra(Intent.EXTRA_TEXT, content);
+                                                    emailIntent.putExtra(Intent.EXTRA_TEXT, emailContent);
                                                     emailIntent.setType("message/rfc822");
                                                     startActivityForResult(Intent.createChooser(emailIntent, "이메일을 보낼 앱을 선택하세요."), CHOOSE_MAIL_APP);
                                                 }
