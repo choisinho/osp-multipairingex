@@ -335,9 +335,7 @@ public class ClassActivity extends AppCompatActivity {
                             mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
                             mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
                             stopService(new Intent(ClassActivity.this, ExitService.class));
-                            Intent intent = new Intent(ClassActivity.this, MainActivity.class);
-                            intent.putExtra("finishedClass", classroomName);
-                            startActivity(intent);
+                            startActivity(new Intent(ClassActivity.this, MainActivity.class));
                             finish();
                         }
                     })

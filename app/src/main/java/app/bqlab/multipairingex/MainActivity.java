@@ -43,7 +43,6 @@ public class MainActivity extends AppCompatActivity {
         init();
         loadData();
         checkClassCount();
-        checkFinishedClass();
     }
 
     private void init() {
@@ -212,15 +211,6 @@ public class MainActivity extends AppCompatActivity {
                         }).show();
             } catch (ArithmeticException e) {
                 e.printStackTrace();
-            }
-        }
-    }
-
-    private void checkFinishedClass() {
-        if (getIntent().getStringExtra("finishedClass") != null) {
-            for (Classroom classroom : classrooms) {
-                if (getIntent().getStringExtra("finishedClass").equals(classroom.name))
-                    removeClass(classroom);
             }
         }
     }
