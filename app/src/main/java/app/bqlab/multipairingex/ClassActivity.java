@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import java.time.chrono.ThaiBuddhistEra;
 import java.util.IllegalFormatCodePointException;
+import java.util.Random;
 
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
@@ -33,7 +34,7 @@ public class ClassActivity extends AppCompatActivity {
     //variables
     int classNumber = 1;
     int classroomNumber, studentNumber;
-    boolean isClickedBackbutton, allowedExit;
+    boolean isClickedBackbutton;
     String classroomName, emailContent = "";
     //objects
     Classroom mClassroom;
@@ -69,11 +70,14 @@ public class ClassActivity extends AppCompatActivity {
                     try {
                         if (student.bluetooth != null) {
                             total += student.count;
-                            allowedExit = true;
                             student.connected = false;
                             student.bluetooth.send("B", false);
                             Thread.sleep(1000);
                             student.bluetooth.disconnect();
+                            loadStudentList();
+                        } else {
+                            total += student.count;
+                            student.connected = false;
                             loadStudentList();
                         }
                     } catch (Exception e) {
@@ -136,10 +140,12 @@ public class ClassActivity extends AppCompatActivity {
                 exitClass();
             }
         });
+        for (Student student : mClassroom.students) {
+            student.count = new Random().nextInt(10);
+        }
     }
 
     private void loadStudentList() {
-        Log.d(TAG, "loadStudentList: ");
         classBodyList.removeAllViews();
         for (int i = 0; i < mClassroom.students.length; i++) {
             if (mClassroom.students[i] == null)
@@ -189,12 +195,10 @@ public class ClassActivity extends AppCompatActivity {
                     studentNumber = i;
                 } else if (i >= 10 && studentNumber >= 0) {
                     if (i == 255) {
-                        Log.d(TAG, "onDataReceived: studentNumber: " + message);
                         mClassroom.students[studentNumber].finished = true;
                         loadStudentList();
                     } else {
                         int count = i - 10;
-                        Log.d(TAG, "onDataReceived: data: " + message);
                         if (mClassroom.students[studentNumber].count != count) {
                             mClassroom.students[studentNumber].count = count;
                             loadStudentList();
@@ -216,22 +220,9 @@ public class ClassActivity extends AppCompatActivity {
 
             @Override
             public void onDeviceDisconnected() {
-                if (allowedExit) {
-                    mStudent.connected = false;
-                    setEnableChildren(true, classBodyList);
-                    loadStudentList();
-                } else {
-                    new AlertDialog.Builder(ClassActivity.this)
-                            .setTitle("장치에서 문제가 발생했습니다!")
-                            .setMessage("수업이 진행되는 동안 장치와의 연결이 강제로 끊어진 경우 수업을 더이상 진행할 수 없습니다.")
-                            .setCancelable(false)
-                            .setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    exitClass();
-                                }
-                            }).show();
-                }
+                mStudent.connected = false;
+                setEnableChildren(true, classBodyList);
+                loadStudentList();
             }
 
             @Override
@@ -274,9 +265,9 @@ public class ClassActivity extends AppCompatActivity {
                                 .append(classNumber)
                                 .append("차 실습\n");
                         for (int i = 0; i < mClassroom.students.length; i++) {
-                            builder.append(String.valueOf(i + 1))
+                            builder.append((i + 1))
                                     .append("번 학생 참여도: ")
-                                    .append(String.valueOf(mClassroom.students[i].count))
+                                    .append(mClassroom.students[i].count)
                                     .append("\n");
                         }
                         builder.append("\n");
@@ -286,6 +277,10 @@ public class ClassActivity extends AppCompatActivity {
                             if (student.bluetooth != null) {
                                 total += student.count;
                                 student.bluetooth.send("A", false);
+                                student.count = 0;
+                                student.finished = false;
+                                total += student.count;
+                            } else {
                                 student.count = 0;
                                 student.finished = false;
                                 total += student.count;
@@ -318,13 +313,16 @@ public class ClassActivity extends AppCompatActivity {
                             int average, total = 0;
                             for (Student student : mClassroom.students) {
                                 try {
-                                    if (student.bluetooth != null) {
+                                    if (student.bluetooth != null) { //test
                                         total += student.count;
-                                        allowedExit = true;
                                         student.connected = false;
                                         student.bluetooth.send("B", false);
                                         Thread.sleep(1000);
                                         student.bluetooth.disconnect();
+                                        loadStudentList();
+                                    } else {
+                                        total += student.count;
+                                        student.connected = false;
                                         loadStudentList();
                                     }
                                 } catch (Exception e) {
@@ -362,9 +360,9 @@ public class ClassActivity extends AppCompatActivity {
                                                             .append(classNumber)
                                                             .append("차 실습\n");
                                                     for (int i = 0; i < mClassroom.students.length; i++) {
-                                                        builder.append(String.valueOf(i + 1))
+                                                        builder.append((i + 1))
                                                                 .append("번 학생 참여도: ")
-                                                                .append(String.valueOf(mClassroom.students[i].count))
+                                                                .append(mClassroom.students[i].count)
                                                                 .append("\n");
                                                     }
                                                     emailContent = builder.toString();
