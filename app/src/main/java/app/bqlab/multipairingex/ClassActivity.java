@@ -29,7 +29,6 @@ import app.akexorcist.bluetotohspp.library.DeviceList;
 public class ClassActivity extends AppCompatActivity {
 
     //constants
-    final String TAG = "ClassActivity";
     final int CHOOSE_MAIL_APP = 0;
     //variables
     int classNumber = 1;
@@ -140,9 +139,6 @@ public class ClassActivity extends AppCompatActivity {
                 exitClass();
             }
         });
-        for (Student student : mClassroom.students) {
-            student.count = new Random().nextInt(10);
-        }
     }
 
     private void loadStudentList() {
@@ -313,7 +309,7 @@ public class ClassActivity extends AppCompatActivity {
                             int average, total = 0;
                             for (Student student : mClassroom.students) {
                                 try {
-                                    if (student.bluetooth != null) { //test
+                                    if (student.bluetooth != null) {
                                         total += student.count;
                                         student.connected = false;
                                         student.bluetooth.send("B", false);
