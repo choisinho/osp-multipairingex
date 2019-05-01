@@ -29,7 +29,7 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity {
 
     //constants
-    final String TAG = "MainActivity: ";
+    final String TAG = "MainActivity";
     //variables
     SharedPreferences mClassroomPref;
     ArrayList<Classroom> classrooms;
@@ -113,16 +113,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void saveData() {
-        try {
-            SharedPreferences.Editor editor = mClassroomPref.edit();
-            Gson gson = new Gson();
-            String json = gson.toJson(classrooms);
-            editor.putString("list", json);
-            editor.apply();
-            loadData();
-        } catch (Exception e) {
-            Toast.makeText(this, "일시적인 오류입니다. 잠시후 다시 시도해주세요.", Toast.LENGTH_LONG).show();
-        }
+        SharedPreferences.Editor editor = mClassroomPref.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(classrooms);
+        editor.putString("list", json);
+        editor.apply();
+        loadData();
     }
 
     private void loadData() {
