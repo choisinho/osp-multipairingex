@@ -22,6 +22,10 @@ import java.time.chrono.ThaiBuddhistEra;
 import java.util.IllegalFormatCodePointException;
 import java.util.Random;
 
+import app.akexorcist.bluetotohspp.library.BluetoothSPP;
+import app.akexorcist.bluetotohspp.library.BluetoothState;
+import app.akexorcist.bluetotohspp.library.DeviceList;
+
 public class ClassActivity extends AppCompatActivity {
 
     //constants
@@ -204,7 +208,6 @@ public class ClassActivity extends AppCompatActivity {
             public void onDeviceConnected(String name, String address) {
                 Toast.makeText(ClassActivity.this, "장치와 연결되었습니다.", Toast.LENGTH_LONG).show();
                 mStudent.connected = true;
-                mStudent.address = address;
                 mStudent.bluetooth.send(String.valueOf(mStudent.number), false);
                 mClassroom.students[mStudent.number] = mStudent;
                 setEnableChildren(true, classBodyList);
@@ -212,10 +215,9 @@ public class ClassActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onDeviceDisconnected(String address) {
-                for (int i = 0; i < mClassroom.students.length; i++)
-                    if (mClassroom.students[i].address.equals(address))
-                        mClassroom.students[i] = null;
+            public void onDeviceDisconnected() {
+                mStudent.connected = false;
+                setEnableChildren(true, classBodyList);
                 loadStudentList();
             }
 
