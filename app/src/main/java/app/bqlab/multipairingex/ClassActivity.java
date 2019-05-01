@@ -1,6 +1,9 @@
 package app.bqlab.multipairingex;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -18,9 +21,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import java.time.chrono.ThaiBuddhistEra;
-import java.util.IllegalFormatCodePointException;
-import java.util.Random;
+import java.util.List;
 
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
@@ -35,6 +36,8 @@ public class ClassActivity extends AppCompatActivity {
     int classroomNumber, studentNumber;
     boolean isClickedBackbutton;
     String classroomName, emailContent = "";
+    String TAG = "ClassActivity";
+    String[] connectedAddresses;
     //objects
     Classroom mClassroom;
     BluetoothSPP mBluetooth;
@@ -124,6 +127,7 @@ public class ClassActivity extends AppCompatActivity {
         mBluetooth = new BluetoothSPP(this);
         mClassroom = new Classroom(classroomName, classroomNumber);
         mClassroomPref = getSharedPreferences("classroom", MODE_PRIVATE);
+        connectedAddresses = new String[mClassroom.students.length];
         //layouts
         classBodyList = findViewById(R.id.class_body_list);
         //setting
@@ -210,8 +214,10 @@ public class ClassActivity extends AppCompatActivity {
                 mStudent.connected = true;
                 mStudent.bluetooth.send(String.valueOf(mStudent.number), false);
                 mClassroom.students[mStudent.number] = mStudent;
+                connectedAddresses[mStudent.number] = address;
                 setEnableChildren(true, classBodyList);
                 loadStudentList();
+                checkDisconnectedDevice();
             }
 
             @Override
@@ -378,6 +384,13 @@ public class ClassActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void checkDisconnectedDevice() {
+        BluetoothManager manager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
+        List<BluetoothDevice> connectedDevices = manager.getConnectedDevices(BluetoothProfile.GATT);
+        Log.d(TAG, "checkDisconnectedDevice: size: " + connectedDevices.size());
+        //뭘 해야되지...
     }
 
     private void checkExitService() {
