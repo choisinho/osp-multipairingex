@@ -37,7 +37,6 @@ public class ClassActivity extends AppCompatActivity {
     boolean isClickedBackbutton;
     String classroomName, emailContent = "";
     String TAG = "ClassActivity";
-    String[] connectedAddresses;
     //objects
     Classroom mClassroom;
     BluetoothSPP mBluetooth;
@@ -127,7 +126,6 @@ public class ClassActivity extends AppCompatActivity {
         mBluetooth = new BluetoothSPP(this);
         mClassroom = new Classroom(classroomName, classroomNumber);
         mClassroomPref = getSharedPreferences("classroom", MODE_PRIVATE);
-        connectedAddresses = new String[mClassroom.students.length];
         //layouts
         classBodyList = findViewById(R.id.class_body_list);
         //setting
@@ -214,7 +212,6 @@ public class ClassActivity extends AppCompatActivity {
                 mStudent.connected = true;
                 mStudent.bluetooth.send(String.valueOf(mStudent.number), false);
                 mClassroom.students[mStudent.number] = mStudent;
-                connectedAddresses[mStudent.number] = address;
                 setEnableChildren(true, classBodyList);
                 loadStudentList();
                 checkDisconnectedDevice();
@@ -387,9 +384,6 @@ public class ClassActivity extends AppCompatActivity {
     }
 
     private void checkDisconnectedDevice() {
-        BluetoothManager manager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
-        List<BluetoothDevice> connectedDevices = manager.getConnectedDevices(BluetoothProfile.GATT);
-        Log.d(TAG, "checkDisconnectedDevice: size: " + connectedDevices.size());
         //뭘 해야되지...
     }
 
