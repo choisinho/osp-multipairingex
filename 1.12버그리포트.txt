@@ -10,6 +10,7 @@ mStudent가 마지막으로 연결한 놈으로 초기화되었기 때문이다. 왜냐하면 mStudent는
  - 연결할때마다 장치 주소를 저장했다가 연결이 끊길 때 연결된 장치 리스트와 비교를 하면서 없을경우 해당 인덱스를 찾아 삭제
  - https://stackoverflow.com/questions/33383891/currently-connected-bluetooth-device-android
  - https://stackoverflow.com/questions/10411070/how-to-know-when-bluetooth-disconnected
+ - https://yolo.tistory.com/89
 /*틀렸음
  - 식별자는 두가지 종류가 있다. mStudent.number, studentNumber. 이 두 값의 차는 1이다. number가 1 더 많다.
  - 하지만 studentNumber는 정상적으로 작동함 아님 이것도 틀림
