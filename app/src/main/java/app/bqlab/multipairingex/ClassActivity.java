@@ -40,6 +40,7 @@ public class ClassActivity extends AppCompatActivity {
     boolean isClickedBackbutton;
     String classroomName, emailContent = "";
     String TAG = "ClassActivity";
+    String[] connectedAddresses;
     //objects
     Classroom mClassroom;
     BluetoothSPP mBluetooth;
@@ -136,6 +137,7 @@ public class ClassActivity extends AppCompatActivity {
         mBluetooth = new BluetoothSPP(this);
         mClassroom = new Classroom(classroomName, classroomNumber);
         mClassroomPref = getSharedPreferences("classroom", MODE_PRIVATE);
+        connectedAddresses = new String[mClassroom.students.length];
         //layouts
         classBodyList = findViewById(R.id.class_body_list);
         //setting
@@ -222,16 +224,13 @@ public class ClassActivity extends AppCompatActivity {
                 mStudent.connected = true;
                 mStudent.bluetooth.send(String.valueOf(mStudent.number), false);
                 mClassroom.students[mStudent.number] = mStudent;
+                connectedAddresses[mStudent.number] = address;
                 setEnableChildren(true, classBodyList);
                 loadStudentList();
-                checkDisconnectedDevice();
             }
 
             @Override
             public void onDeviceDisconnected() {
-                mStudent.connected = false;
-                setEnableChildren(true, classBodyList);
-                loadStudentList();
             }
 
             @Override
@@ -393,10 +392,6 @@ public class ClassActivity extends AppCompatActivity {
         }
     }
 
-    private void checkDisconnectedDevice() {
-        //뭘 해야되지...
-    }
-
     private void checkExitService() {
         if (!ServiceCheck.isRunning(this, ExitService.class.getName())) {
             startService(new Intent(this, ExitService.class));
@@ -425,10 +420,15 @@ public class ClassActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-            if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
-                Log.d(TAG, "onReceive: connected device: " + device.getName());
-            } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
-                Log.d(TAG, "onReceive: disconnected device: " + device.getName());
+            if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
+                for (int i = 0; i < connectedAddresses.length; i++) {
+                    if (connectedAddresses[i].equals(device.getAddress())) {
+                        mClassroom.students[i].connected = false;
+                        setEnableChildren(true, classBodyList);
+                        loadStudentList();
+                        break;
+                    }
+                }
             }
         }
     };
