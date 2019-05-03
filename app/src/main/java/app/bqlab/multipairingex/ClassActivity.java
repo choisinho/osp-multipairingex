@@ -364,7 +364,7 @@ public class ClassActivity extends AppCompatActivity {
     }
 
     private void appendEmailContent(String type) {
-        int average = 0, total = 0, connected = 0;
+        int average, total = 0, connected = 0;
         StringBuilder builder = new StringBuilder();
         builder.append(emailContent);
         builder.append("\n")
