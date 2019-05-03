@@ -24,6 +24,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
@@ -41,6 +42,7 @@ public class ClassActivity extends AppCompatActivity {
     String classroomName, emailContent = "";
     String TAG = "ClassActivity";
     String[] connectedAddresses;
+    ArrayList<String[]> counts;
     //objects
     Classroom mClassroom;
     BluetoothSPP mBluetooth;
@@ -53,8 +55,8 @@ public class ClassActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_class);
-        setBluetoothReceiver();
         init();
+        setBluetoothReceiver();
         checkExitService();
         loadStudentList();
     }
@@ -97,8 +99,8 @@ public class ClassActivity extends AppCompatActivity {
                     }
                 }
                 average = total / mClassroom.students.length;
-                mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
-                mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
+//                mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
+//                mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
                 stopService(new Intent(ClassActivity.this, ExitService.class));
                 Intent intent = new Intent(ClassActivity.this, MainActivity.class);
                 intent.putExtra("finishedClass", classroomName);
@@ -225,6 +227,7 @@ public class ClassActivity extends AppCompatActivity {
                 mStudent.bluetooth.send(String.valueOf(mStudent.number), false);
                 mClassroom.students[mStudent.number] = mStudent;
                 connectedAddresses[mStudent.number] = address;
+                Log.d(TAG, "onDeviceConnected: connectedAddress: " + mStudent.number);
                 setEnableChildren(true, classBodyList);
                 loadStudentList();
             }
@@ -266,38 +269,48 @@ public class ClassActivity extends AppCompatActivity {
                 .setPositiveButton("다음 실습", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        int average, total = 0;
-                        StringBuilder builder = new StringBuilder();
-                        builder.append(emailContent);
-                        builder.append("\n")
-                                .append(classNumber)
-                                .append("차 실습\n");
-                        for (int i = 0; i < mClassroom.students.length; i++) {
-                            builder.append((i + 1))
-                                    .append("번 학생 참여도: ")
-                                    .append(mClassroom.students[i].count)
-                                    .append("\n");
-                        }
-                        builder.append("\n");
-                        emailContent = builder.toString();
-                        classNumber += 1;
-                        for (Student student : mClassroom.students) {
-                            if (student.bluetooth != null) {
-                                total += student.count;
-                                student.bluetooth.send("A", false);
-                                student.count = 0;
-                                student.finished = false;
-                                total += student.count;
-                            } else {
-                                student.count = 0;
-                                student.finished = false;
-                                total += student.count;
+                        //email content
+                        try {
+                            int average = 0, total = 0;
+                            StringBuilder builder = new StringBuilder();
+                            builder.append(emailContent);
+                            builder.append("\n")
+                                    .append(classNumber)
+                                    .append("차 실습\n");
+                            for (int i = 0; i < mClassroom.students.length; i++) {
+                                if (mClassroom.students[i].connected) {
+                                    builder.append((i + 1))
+                                            .append("번 학생 참여도: ")
+                                            .append(mClassroom.students[i].count)
+                                            .append("\n");
+                                }
                             }
+                            builder.append("\n");
+                            Thread.sleep(500);
+                            //next class
+                            for (Student student : mClassroom.students) {
+                                if (student.bluetooth != null) {
+                                    total += student.count;
+                                    student.bluetooth.send("A", false);
+                                    student.count = 0;
+                                    student.finished = false;
+                                    total += student.count;
+                                } else {
+                                    student.count = 0;
+                                    student.finished = false;
+                                    total += student.count;
+                                }
+                            }
+                            average = total / mClassroom.students.length;
+//                        mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
+//                        mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
+                            builder.append("평균: ").append(average).append("\n");
+                            emailContent = builder.toString();
+                            classNumber += 1;
+                            loadStudentList();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
-                        average = total / mClassroom.students.length;
-                        mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
-                        mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
-                        loadStudentList();
                     }
                 })
                 .setNegativeButton("취소", new DialogInterface.OnClickListener() {
@@ -338,8 +351,8 @@ public class ClassActivity extends AppCompatActivity {
                                 }
                             }
                             average = total / mClassroom.students.length;
-                            mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
-                            mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
+//                            mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
+//                            mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
                             stopService(new Intent(ClassActivity.this, ExitService.class));
                             startActivity(new Intent(ClassActivity.this, MainActivity.class));
                             finish();
@@ -422,11 +435,15 @@ public class ClassActivity extends AppCompatActivity {
             BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
             if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
                 for (int i = 0; i < connectedAddresses.length; i++) {
-                    if (connectedAddresses[i].equals(device.getAddress())) {
-                        mClassroom.students[i].connected = false;
-                        setEnableChildren(true, classBodyList);
-                        loadStudentList();
-                        break;
+                    try {
+                        if (connectedAddresses[i].equals(device.getAddress())) {
+                            mClassroom.students[i].connected = false;
+                            setEnableChildren(true, classBodyList);
+                            loadStudentList();
+                            break;
+                        }
+                    }catch (NullPointerException e) {
+                        e.printStackTrace();
                     }
                 }
             }

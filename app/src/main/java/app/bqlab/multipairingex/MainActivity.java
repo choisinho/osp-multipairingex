@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         init();
         loadData();
-        checkClassCount();
+//        checkClassCount();
     }
 
     private void init() {
@@ -190,24 +190,24 @@ public class MainActivity extends AppCompatActivity {
         saveData();
     }
 
-    private void checkClassCount() {
-        if ((mClassroomPref.getInt("count", 0) % 3) == 0) {
-            try {
-                Log.d(TAG, "checkClassCount: average: " + String.valueOf(mClassroomPref.getInt("average", 0)));
-                int average = mClassroomPref.getInt("average", 0) / mClassroomPref.getInt("count", 0);
-                new AlertDialog.Builder(this)
-                        .setTitle("강의 참여도 통계")
-                        .setMessage("현재까지의 참여도 평균은 " + String.valueOf(average) + "입니다.")
-                        .setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Toast.makeText(MainActivity.this, "평균은 계속해서 누적됩니다.", Toast.LENGTH_LONG).show();
-                                dialog.dismiss();
-                            }
-                        }).show();
-            } catch (ArithmeticException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+//    private void checkClassCount() {
+//        if ((mClassroomPref.getInt("count", 0) % 3) == 0) {
+//            try {
+//                Log.d(TAG, "checkClassCount: average: " + String.valueOf(mClassroomPref.getInt("average", 0)));
+//                int average = mClassroomPref.getInt("average", 0) / mClassroomPref.getInt("count", 0);
+//                new AlertDialog.Builder(this)
+//                        .setTitle("강의 참여도 통계")
+//                        .setMessage("현재까지의 참여도 평균은 " + String.valueOf(average) + "입니다.")
+//                        .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+//                            @Override
+//                            public void onClick(DialogInterface dialog, int which) {
+//                                Toast.makeText(MainActivity.this, "평균은 계속해서 누적됩니다.", Toast.LENGTH_LONG).show();
+//                                dialog.dismiss();
+//                            }
+//                        }).show();
+//            } catch (ArithmeticException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
 }
