@@ -98,12 +98,12 @@ public class ClassActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
                 }
-                average = total / mClassroom.students.length;
+//                average = total / mClassroom.students.length;
 //                mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
 //                mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
                 stopService(new Intent(ClassActivity.this, ExitService.class));
                 Intent intent = new Intent(ClassActivity.this, MainActivity.class);
-                intent.putExtra("finishedClass", classroomName);
+//                intent.putExtra("finishedClass", classroomName);
                 startActivity(intent);
                 finish();
             }
@@ -270,47 +270,42 @@ public class ClassActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         //email content
-                        try {
-                            int average = 0, total = 0;
-                            StringBuilder builder = new StringBuilder();
-                            builder.append(emailContent);
-                            builder.append("\n")
-                                    .append(classNumber)
-                                    .append("차 실습\n");
-                            for (int i = 0; i < mClassroom.students.length; i++) {
-                                if (mClassroom.students[i].connected) {
-                                    builder.append((i + 1))
-                                            .append("번 학생 참여도: ")
-                                            .append(mClassroom.students[i].count)
-                                            .append("\n");
-                                }
+                        int average = 0, total = 0;
+                        StringBuilder builder = new StringBuilder();
+                        builder.append(emailContent);
+                        builder.append("\n")
+                                .append(classNumber)
+                                .append("차 실습\n");
+                        for (int i = 0; i < mClassroom.students.length; i++) {
+                            if (mClassroom.students[i].connected) {
+                                builder.append((i + 1))
+                                        .append("번 학생 참여도: ")
+                                        .append(mClassroom.students[i].count)
+                                        .append("\n");
                             }
-                            builder.append("\n");
-                            Thread.sleep(500);
-                            //next class
-                            for (Student student : mClassroom.students) {
-                                if (student.bluetooth != null) {
-                                    total += student.count;
-                                    student.bluetooth.send("A", false);
-                                    student.count = 0;
-                                    student.finished = false;
-                                    total += student.count;
-                                } else {
-                                    student.count = 0;
-                                    student.finished = false;
-                                    total += student.count;
-                                }
+                        }
+                        //next class
+                        for (Student student : mClassroom.students) {
+                            if (student.bluetooth != null) {
+                                total += student.count;
+                                student.bluetooth.send("A", false);
+                                student.count = 0;
+                                student.finished = false;
+                                total += student.count;
+                            } else {
+                                student.count = 0;
+                                student.finished = false;
+                                total += student.count;
                             }
-                            average = total / mClassroom.students.length;
+                        }
+                        average = total / mClassroom.students.length;
 //                        mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
 //                        mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
-                            builder.append("평균: ").append(average).append("\n");
-                            emailContent = builder.toString();
-                            classNumber += 1;
-                            loadStudentList();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+                        builder.append("평균: ").append(average).append("\n");
+                        emailContent = builder.toString();
+                        classNumber += 1;
+                        loadStudentList();
+                        Log.d(TAG, "onClick: emailContent: "+emailContent);
                     }
                 })
                 .setNegativeButton("취소", new DialogInterface.OnClickListener() {
@@ -331,18 +326,15 @@ public class ClassActivity extends AppCompatActivity {
                     .setNegativeButton("종료", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            int average, total = 0;
                             for (Student student : mClassroom.students) {
                                 try {
                                     if (student.bluetooth != null) {
-                                        total += student.count;
                                         student.connected = false;
                                         student.bluetooth.send("B", false);
                                         Thread.sleep(1000);
                                         student.bluetooth.disconnect();
                                         loadStudentList();
                                     } else {
-                                        total += student.count;
                                         student.connected = false;
                                         loadStudentList();
                                     }
@@ -350,9 +342,6 @@ public class ClassActivity extends AppCompatActivity {
                                     e.printStackTrace();
                                 }
                             }
-                            average = total / mClassroom.students.length;
-//                            mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
-//                            mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
                             stopService(new Intent(ClassActivity.this, ExitService.class));
                             startActivity(new Intent(ClassActivity.this, MainActivity.class));
                             finish();
@@ -375,18 +364,44 @@ public class ClassActivity extends AppCompatActivity {
                                                 public void run() {
                                                     String email[] = new String[1];
                                                     email[0] = input.getText().toString();
+                                                    int average, total = 0;
                                                     StringBuilder builder = new StringBuilder();
                                                     builder.append(emailContent);
                                                     builder.append("\n")
                                                             .append(classNumber)
                                                             .append("차 실습\n");
                                                     for (int i = 0; i < mClassroom.students.length; i++) {
-                                                        builder.append((i + 1))
-                                                                .append("번 학생 참여도: ")
-                                                                .append(mClassroom.students[i].count)
-                                                                .append("\n");
+                                                        if (mClassroom.students[i].connected) {
+                                                            builder.append((i + 1))
+                                                                    .append("번 학생 참여도: ")
+                                                                    .append(mClassroom.students[i].count)
+                                                                    .append("\n");
+                                                        }
                                                     }
+                                                    for (Student student : mClassroom.students) {
+                                                        try {
+                                                            if (student.bluetooth != null) {
+                                                                total += student.count;
+                                                                student.connected = false;
+                                                                student.bluetooth.send("B", false);
+                                                                Thread.sleep(1000);
+                                                                student.bluetooth.disconnect();
+                                                                loadStudentList();
+                                                            } else {
+                                                                total += student.count;
+                                                                student.connected = false;
+                                                                loadStudentList();
+                                                            }
+                                                        } catch (Exception e) {
+                                                            e.printStackTrace();
+                                                        }
+                                                    }
+                                                    average = total / mClassroom.students.length;
+//                            mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
+//                            mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
+                                                    builder.append("평균: ").append(average).append("\n");
                                                     emailContent = builder.toString();
+                                                    Log.d(TAG, "onClick: emailContent: "+emailContent);
                                                     Intent emailIntent = new Intent(Intent.ACTION_SEND);
                                                     emailIntent.putExtra(Intent.EXTRA_EMAIL, email);
                                                     emailIntent.putExtra(Intent.EXTRA_SUBJECT, classroomName + " 수업참여도");
@@ -442,7 +457,7 @@ public class ClassActivity extends AppCompatActivity {
                             loadStudentList();
                             break;
                         }
-                    }catch (NullPointerException e) {
+                    } catch (NullPointerException e) {
                         e.printStackTrace();
                     }
                 }
