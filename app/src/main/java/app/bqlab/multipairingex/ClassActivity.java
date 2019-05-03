@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
@@ -59,6 +60,9 @@ public class ClassActivity extends AppCompatActivity {
         setBluetoothReceiver();
         checkExitService();
         loadStudentList();
+        for (Student student : mClassroom.students) {
+            student.count = new Random().nextInt(10);
+        }
     }
 
     @Override
@@ -188,7 +192,7 @@ public class ClassActivity extends AppCompatActivity {
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        connectToDevice(finalI);
+//                        connectToDevice(finalI); //test
                     }
                 });
             }
