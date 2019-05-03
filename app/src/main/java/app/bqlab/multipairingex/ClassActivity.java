@@ -60,9 +60,6 @@ public class ClassActivity extends AppCompatActivity {
         setBluetoothReceiver();
         checkExitService();
         loadStudentList();
-        for (Student student : mClassroom.students) {
-            student.count = new Random().nextInt(10);
-        }
     }
 
     @Override
@@ -192,7 +189,7 @@ public class ClassActivity extends AppCompatActivity {
                 button.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-//                        connectToDevice(finalI); //test
+                        connectToDevice(finalI);
                     }
                 });
             }
@@ -274,7 +271,7 @@ public class ClassActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         //email content
-                        int average = 0, total = 0;
+                        int average, total = 0, connected = 0;
                         StringBuilder builder = new StringBuilder();
                         builder.append(emailContent);
                         builder.append("\n")
@@ -286,6 +283,7 @@ public class ClassActivity extends AppCompatActivity {
                                         .append("번 학생 참여도: ")
                                         .append(mClassroom.students[i].count)
                                         .append("\n");
+                                connected++;
                             }
                         }
                         //next class
@@ -302,14 +300,13 @@ public class ClassActivity extends AppCompatActivity {
                                 total += student.count;
                             }
                         }
-                        average = total / mClassroom.students.length;
+                        average = total / connected;
 //                        mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
 //                        mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
                         builder.append("평균: ").append(average).append("\n");
                         emailContent = builder.toString();
                         classNumber += 1;
                         loadStudentList();
-                        Log.d(TAG, "onClick: emailContent: "+emailContent);
                     }
                 })
                 .setNegativeButton("취소", new DialogInterface.OnClickListener() {
@@ -368,7 +365,7 @@ public class ClassActivity extends AppCompatActivity {
                                                 public void run() {
                                                     String email[] = new String[1];
                                                     email[0] = input.getText().toString();
-                                                    int average, total = 0;
+                                                    int average, total = 0, connected = 0;
                                                     StringBuilder builder = new StringBuilder();
                                                     builder.append(emailContent);
                                                     builder.append("\n")
@@ -380,10 +377,12 @@ public class ClassActivity extends AppCompatActivity {
                                                                     .append("번 학생 참여도: ")
                                                                     .append(mClassroom.students[i].count)
                                                                     .append("\n");
+                                                            connected++;
                                                         }
                                                     }
                                                     for (Student student : mClassroom.students) {
                                                         try {
+                                                            Log.d(TAG, "run: isbluetoothnull?: "+(student.bluetooth==null));//test
                                                             if (student.bluetooth != null) {
                                                                 total += student.count;
                                                                 student.connected = false;
@@ -400,7 +399,7 @@ public class ClassActivity extends AppCompatActivity {
                                                             e.printStackTrace();
                                                         }
                                                     }
-                                                    average = total / mClassroom.students.length;
+                                                    average = total / connected;
 //                            mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
 //                            mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
                                                     builder.append("평균: ").append(average).append("\n");
