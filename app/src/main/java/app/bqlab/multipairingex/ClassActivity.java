@@ -2,8 +2,6 @@ package app.bqlab.multipairingex;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
-import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -12,6 +10,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
@@ -25,8 +25,6 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
@@ -36,6 +34,8 @@ public class ClassActivity extends AppCompatActivity {
 
     //constants
     final int CHOOSE_MAIL_APP = 0;
+    final String NEXT_CLASS = "A";
+    final String EXIT_CLASS = "B";
     //variables
     int classNumber = 1;
     int classroomNumber, studentNumber;
@@ -80,18 +80,15 @@ public class ClassActivity extends AppCompatActivity {
             if (requestCode == BluetoothState.REQUEST_CONNECT_DEVICE) {
                 setEnableChildren(true, classBodyList);
             } else if (requestCode == CHOOSE_MAIL_APP) {
-                int average, total = 0;
                 for (Student student : mClassroom.students) {
                     try {
                         if (student.bluetooth != null) {
-                            total += student.count;
                             student.connected = false;
-                            student.bluetooth.send("B", false);
+                            student.bluetooth.send(EXIT_CLASS, false);
                             Thread.sleep(1000);
                             student.bluetooth.disconnect();
                             loadStudentList();
                         } else {
-                            total += student.count;
                             student.connected = false;
                             loadStudentList();
                         }
@@ -99,12 +96,8 @@ public class ClassActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
                 }
-//                average = total / mClassroom.students.length;
-//                mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
-//                mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
                 stopService(new Intent(ClassActivity.this, ExitService.class));
                 Intent intent = new Intent(ClassActivity.this, MainActivity.class);
-//                intent.putExtra("finishedClass", classroomName);
                 startActivity(intent);
                 finish();
             }
@@ -147,7 +140,7 @@ public class ClassActivity extends AppCompatActivity {
         findViewById(R.id.class_bot_stop).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                stopClass();
+                nextClass();
             }
         });
         findViewById(R.id.class_bot_exit).setOnClickListener(new View.OnClickListener() {
@@ -262,7 +255,7 @@ public class ClassActivity extends AppCompatActivity {
         }
     }
 
-    private void stopClass() {
+    private void nextClass() {
         new AlertDialog.Builder(ClassActivity.this)
                 .setTitle("실습 종료")
                 .setMessage("실습을 종료하면 다음 실습을 진행할 수 있습니다.")
@@ -270,43 +263,7 @@ public class ClassActivity extends AppCompatActivity {
                 .setPositiveButton("다음 실습", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        //email content
-                        int average, total = 0, connected = 0;
-                        StringBuilder builder = new StringBuilder();
-                        builder.append(emailContent);
-                        builder.append("\n")
-                                .append(classNumber)
-                                .append("차 실습\n");
-                        for (int i = 0; i < mClassroom.students.length; i++) {
-                            if (mClassroom.students[i].connected) {
-                                builder.append((i + 1))
-                                        .append("번 학생 참여도: ")
-                                        .append(mClassroom.students[i].count)
-                                        .append("\n");
-                                connected++;
-                            }
-                        }
-                        //next class
-                        for (Student student : mClassroom.students) {
-                            if (student.bluetooth != null) {
-                                total += student.count;
-                                student.bluetooth.send("A", false);
-                                student.count = 0;
-                                student.finished = false;
-                                total += student.count;
-                            } else {
-                                student.count = 0;
-                                student.finished = false;
-                                total += student.count;
-                            }
-                        }
-                        average = total / connected;
-//                        mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
-//                        mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
-                        builder.append("평균: ").append(average).append("\n");
-                        emailContent = builder.toString();
-                        classNumber += 1;
-                        loadStudentList();
+                        appendEmailContent(NEXT_CLASS);
                     }
                 })
                 .setNegativeButton("취소", new DialogInterface.OnClickListener() {
@@ -331,7 +288,7 @@ public class ClassActivity extends AppCompatActivity {
                                 try {
                                     if (student.bluetooth != null) {
                                         student.connected = false;
-                                        student.bluetooth.send("B", false);
+                                        student.bluetooth.send(EXIT_CLASS, false);
                                         Thread.sleep(1000);
                                         student.bluetooth.disconnect();
                                         loadStudentList();
@@ -363,48 +320,9 @@ public class ClassActivity extends AppCompatActivity {
                                             new Thread(new Runnable() {
                                                 @Override
                                                 public void run() {
+                                                    appendEmailContent(EXIT_CLASS);
                                                     String email[] = new String[1];
                                                     email[0] = input.getText().toString();
-                                                    int average, total = 0, connected = 0;
-                                                    StringBuilder builder = new StringBuilder();
-                                                    builder.append(emailContent);
-                                                    builder.append("\n")
-                                                            .append(classNumber)
-                                                            .append("차 실습\n");
-                                                    for (int i = 0; i < mClassroom.students.length; i++) {
-                                                        if (mClassroom.students[i].connected) {
-                                                            builder.append((i + 1))
-                                                                    .append("번 학생 참여도: ")
-                                                                    .append(mClassroom.students[i].count)
-                                                                    .append("\n");
-                                                            connected++;
-                                                        }
-                                                    }
-                                                    for (Student student : mClassroom.students) {
-                                                        try {
-                                                            Log.d(TAG, "run: isbluetoothnull?: "+(student.bluetooth==null));//test
-                                                            if (student.bluetooth != null) {
-                                                                total += student.count;
-                                                                student.connected = false;
-                                                                student.bluetooth.send("B", false);
-                                                                Thread.sleep(1000);
-                                                                student.bluetooth.disconnect();
-                                                                loadStudentList();
-                                                            } else {
-                                                                total += student.count;
-                                                                student.connected = false;
-                                                                loadStudentList();
-                                                            }
-                                                        } catch (Exception e) {
-                                                            e.printStackTrace();
-                                                        }
-                                                    }
-                                                    average = total / connected;
-//                            mClassroomPref.edit().putInt("count", mClassroomPref.getInt("count", 0) + 1).apply();
-//                            mClassroomPref.edit().putInt("average", mClassroomPref.getInt("average", 0) + average).apply();
-                                                    builder.append("평균: ").append(average).append("\n");
-                                                    emailContent = builder.toString();
-                                                    Log.d(TAG, "onClick: emailContent: "+emailContent);
                                                     Intent emailIntent = new Intent(Intent.ACTION_SEND);
                                                     emailIntent.putExtra(Intent.EXTRA_EMAIL, email);
                                                     emailIntent.putExtra(Intent.EXTRA_SUBJECT, classroomName + " 수업참여도");
@@ -444,6 +362,64 @@ public class ClassActivity extends AppCompatActivity {
         registerReceiver(bluetoothReceiver, filter);
         filter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         registerReceiver(bluetoothReceiver, filter);
+    }
+
+    private void appendEmailContent(String type) {
+        int average = 0, total = 0, connected = 0;
+        StringBuilder builder = new StringBuilder();
+        builder.append(emailContent);
+        builder.append("\n")
+                .append(classNumber)
+                .append("차 실습\n");
+        for (int i = 0; i < mClassroom.students.length; i++) {
+            if (mClassroom.students[i].connected) {
+                builder.append((i + 1))
+                        .append("번 학생 참여도: ")
+                        .append(mClassroom.students[i].count)
+                        .append("\n");
+                connected++;
+            }
+        }
+        for (Student student : mClassroom.students) {
+            try {
+                if (student.bluetooth != null) {
+                    total += student.count;
+                    student.bluetooth.send(type, false);
+                    student.count = 0;
+                    student.finished = false;
+                    total += student.count;
+                } else {
+                    student.count = 0;
+                    student.finished = false;
+                    total += student.count;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if (connected == 0)
+            builder.append("이 실습에서는 연결된 장치가 없었습니다.");
+        else {
+            try {
+                average = total / connected;
+            } catch (ArithmeticException e) {
+                average = 0;
+            }
+            builder.append("평균: ").append(average).append("\n");
+        }
+        emailContent = builder.toString();
+        classNumber += 1;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadStudentList();
+                    }
+                });
+            }
+        }).start();
     }
 
     BroadcastReceiver bluetoothReceiver = new BroadcastReceiver() {
