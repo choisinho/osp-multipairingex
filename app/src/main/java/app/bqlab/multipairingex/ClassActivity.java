@@ -221,7 +221,6 @@ public class ClassActivity extends AppCompatActivity {
                 mStudent.bluetooth.send(String.valueOf(mStudent.number), false);
                 mClassroom.students[mStudent.number] = mStudent;
                 connectedAddresses[mStudent.number] = address;
-                Log.d(TAG, "onDeviceConnected: connectedAddress: " + mStudent.number);
                 setEnableChildren(true, classBodyList);
                 loadStudentList();
             }
@@ -429,15 +428,12 @@ public class ClassActivity extends AppCompatActivity {
             BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
             if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
                 for (int i = 0; i < connectedAddresses.length; i++) {
-                    try {
+                    if (connectedAddresses[i] != null) {
                         if (connectedAddresses[i].equals(device.getAddress())) {
                             mClassroom.students[i].connected = false;
                             setEnableChildren(true, classBodyList);
                             loadStudentList();
-                            break;
                         }
-                    } catch (NullPointerException e) {
-                        e.printStackTrace();
                     }
                 }
             }
