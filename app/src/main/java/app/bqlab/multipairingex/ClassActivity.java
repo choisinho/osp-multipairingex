@@ -1,6 +1,7 @@
 package app.bqlab.multipairingex;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -431,6 +432,7 @@ public class ClassActivity extends AppCompatActivity {
                     if (connectedAddresses[i] != null) {
                         if (connectedAddresses[i].equals(device.getAddress())) {
                             mClassroom.students[i].connected = false;
+                            mClassroom.students[i].bluetooth.stopService();
                             setEnableChildren(true, classBodyList);
                             loadStudentList();
                         }
