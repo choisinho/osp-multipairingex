@@ -1,7 +1,6 @@
 package app.bqlab.multipairingex;
 
 import android.app.Activity;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -11,13 +10,10 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -40,11 +36,11 @@ public class ClassActivity extends AppCompatActivity {
     //variables
     int classNumber = 1;
     int classroomNumber, studentNumber;
+    int total, totalAverage;
     boolean isClickedBackbutton;
     String classroomName, emailContent = "";
     String TAG = "ClassActivity";
     String[] connectedAddresses;
-    ArrayList<String[]> counts;
     //objects
     Classroom mClassroom;
     BluetoothSPP mBluetooth;
@@ -398,7 +394,7 @@ public class ClassActivity extends AppCompatActivity {
             }
         }
         if (connected == 0)
-            builder.append("이 실습에서는 연결된 장치가 없었습니다.");
+            builder.append("이 실습에서는 연결된 장치가 없었습니다.\n");
         else {
             try {
                 average = total / connected;
@@ -406,6 +402,15 @@ public class ClassActivity extends AppCompatActivity {
                 average = 0;
             }
             builder.append("평균: ").append(average).append("\n");
+            total += average;
+        }
+        if (type.equals(EXIT_CLASS)) {
+            try {
+                totalAverage = total / classNumber;
+                builder.append("\n전체평균: ").append(totalAverage);
+            } catch (ArithmeticException e) {
+                builder.append("\n전체평균: ").append(0);
+            }
         }
         emailContent = builder.toString();
         classNumber += 1;
